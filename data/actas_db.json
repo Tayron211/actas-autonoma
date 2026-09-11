@@ -1,5 +1,39 @@
 [
   {
+    "id": "ACTA-1789141202260-945",
+    "createdAt": "2026-09-11T15:40:02.260Z",
+    "updatedAt": "2026-09-11T15:40:02.262Z",
+    "tipoActa": "compromiso",
+    "titulo": "Acta de Compromiso",
+    "colaborador": "Ing. Carlos Mendoza Rios",
+    "colabDni": "45892134",
+    "colabEmail": "carlos.mendoza@autonoma.pe",
+    "representante": "Ing. Bruno Paucar",
+    "repCargo": "",
+    "fecha": "11/9/2026",
+    "estadoGeneral": "OPERATIVO Y EN BUEN ESTADO FÍSICO",
+    "equiposCount": 1,
+    "equipos": [
+      {
+        "etiqueta": "AUT-LAP-0482",
+        "descripcion": "Laptop ThinkPad L14 Gen 3",
+        "marca": "Lenovo",
+        "modelo": "21C2S03C00",
+        "serie": "PF3Z2K81",
+        "estado": "Bueno"
+      }
+    ],
+    "category": "Actas de Devolución",
+    "monthFolder": "Septiembre 2026",
+    "filename": "Acta_Compromiso_Ing_Carlos_Mendoza_Rios_2026-09-11.pdf",
+    "localPath": "actas/Actas de Devolución/Septiembre 2026/Acta_Compromiso_Ing_Carlos_Mendoza_Rios_2026-09-11.pdf",
+    "driveUrl": "https://drive.google.com/drive/search?q=Acta_Compromiso_Ing_Carlos_Mendoza_Rios_2026-09-11.pdf",
+    "emailSent": true,
+    "timestamp": 1789141196733,
+    "driveFolderUrl": "https://drive.google.com/drive/folders/1XzJVp9KewZiSoFCVgLCK-vd28bLnMr1P",
+    "driveUploaded": true
+  },
+  {
     "id": "ACTA-1789138026911-886",
     "createdAt": "2026-09-11T14:47:06.911Z",
     "updatedAt": "2026-09-11T14:47:06.911Z",

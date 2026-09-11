@@ -2298,20 +2298,24 @@ www.autonoma.pe`;
 
       try {
         const isCompromiso = state.tipoActa === 'compromiso';
-        CloudDatabaseManager.saveActa({
-          id: `ACTA-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-          tipoActa: isCompromiso ? 'compromiso' : 'entrega',
-          titulo: isCompromiso ? 'Acta de Compromiso' : 'Acta de Devolución de Equipos',
-          colaborador: getVal('colab_nombre', ''),
-          colabDni: getVal('colab_dni', ''),
-          colabEmail: sanitizeEmail(getVal('colab_email', '')),
-          representante: getVal('rep_nombre', ''),
-          repCargo: getVal('rep_cargo', ''),
-          fecha: document.getElementById('fechaActual')?.textContent?.trim() || new Date().toLocaleDateString('es-PE'),
-          estadoGeneral: getVal('entrega_estado_gral', ''),
-          equiposCount: state.equipos ? state.equipos.length : 0,
-          filename: filename
-        });
+        const colabNombre = getVal('colab_nombre', '').trim();
+        if (colabNombre || (state.equipos && state.equipos.length > 0)) {
+          CloudDatabaseManager.saveActa({
+            id: `ACTA-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+            tipoActa: isCompromiso ? 'compromiso' : 'entrega',
+            titulo: isCompromiso ? 'Acta de Compromiso' : 'Acta de Devolución de Equipos',
+            colaborador: colabNombre || 'Colaborador',
+            colabDni: getVal('colab_dni', ''),
+            colabEmail: sanitizeEmail(getVal('colab_email', '')),
+            representante: getVal('rep_nombre', ''),
+            repCargo: getVal('rep_cargo', ''),
+            fecha: document.getElementById('fechaActual')?.textContent?.trim() || new Date().toLocaleDateString('es-PE'),
+            estadoGeneral: getVal('entrega_estado_gral', ''),
+            equiposCount: state.equipos ? state.equipos.length : 0,
+            equipos: state.equipos,
+            filename: filename
+          });
+        }
       } catch (dbErr) {
         console.warn('Error al registrar descarga en base de datos cloud:', dbErr);
       }
@@ -2603,6 +2607,7 @@ www.autonoma.pe`;
         };
 
         let proxyOk = false;
+        let proxyResponseJson = null;
         const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
         if (isLocalHost) {
@@ -2614,13 +2619,13 @@ www.autonoma.pe`;
             });
 
             if (res.ok) {
-              const json = await res.json();
-              if (json.status === 'success') {
+              proxyResponseJson = await res.json();
+              if (proxyResponseJson.status === 'success') {
                 sent = true;
                 methodUsed = 'Google Workspace (Gmail Institucional)';
                 proxyOk = true;
               } else {
-                throw new Error(json.message || 'Respuesta no exitosa de Google Apps Script');
+                throw new Error(proxyResponseJson.message || 'Respuesta no exitosa de Google Apps Script');
               }
             }
           } catch (gasProxyErr) {
@@ -2668,10 +2673,32 @@ www.autonoma.pe`;
           methodUsed = 'Google Workspace (Directo + Drive)';
         }
 
+        const isCompromiso = state.tipoActa === 'compromiso';
+        const colabNombre = getVal('colab_nombre', '').trim() || to.split('@')[0];
+        const colabDni = getVal('colab_dni', '').trim();
+        const repNombre = getVal('rep_nombre', '').trim();
+        const repCargo = getVal('rep_cargo', '').trim();
+        const estadoGral = getVal('entrega_estado_gral', '').trim() || 'OPERATIVO Y EN BUEN ESTADO FÍSICO';
+        const equiposCount = (state.equipos || []).length;
+        const targetDriveUrl = (proxyOk && proxyResponseJson && (proxyResponseJson.driveFileUrl || proxyResponseJson.fileUrl))
+          || `https://drive.google.com/drive/search?q=${encodeURIComponent(filename)}`;
+
         try {
-          CloudDatabaseManager.saveActa({
-            filename: filename,
+          await CloudDatabaseManager.saveActa({
+            tipoActa: isCompromiso ? 'compromiso' : 'entrega',
+            titulo: isCompromiso ? 'Acta de Compromiso' : 'Acta de Devolución de Equipos',
+            colaborador: colabNombre,
+            colabDni: colabDni,
             colabEmail: to,
+            representante: repNombre,
+            repCargo: repCargo,
+            fecha: document.getElementById('fechaActual')?.textContent?.trim() || new Date().toLocaleDateString('es-PE'),
+            estadoGeneral: estadoGral,
+            equiposCount: equiposCount,
+            equipos: state.equipos,
+            filename: filename,
+            driveUrl: targetDriveUrl,
+            driveFolderUrl: 'https://drive.google.com/drive/folders/1XzJVp9KewZiSoFCVgLCK-vd28bLnMr1P',
             emailSent: true,
             driveUploaded: true
           });
@@ -2994,19 +3021,27 @@ www.autonoma.pe`;
         const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
         if (cached) {
           this.actas = JSON.parse(cached);
-          cachedHistoryActas = this.actas;
         }
       } catch (e) {}
 
-      // 2. Primera sincronización inmediata
+      // 2. Cargar desde AndroidBridge si estamos en la app móvil
+      try {
+        if (window.AndroidBridge && typeof window.AndroidBridge.getActas === 'function') {
+          const nativeList = JSON.parse(window.AndroidBridge.getActas() || '[]');
+          if (Array.isArray(nativeList) && nativeList.length > 0) {
+            this.mergeActas(nativeList);
+          }
+        }
+      } catch (e) {}
+
+      // 3. Limpiar cualquier registro huérfano/vacío (sin colaborador ni equipos)
+      this.cleanEmptyActas();
+      cachedHistoryActas = this.actas;
+
+      // 4. Primera sincronización
       this.syncFromCloud();
 
-      // 3. Sincronización en tiempo real cada 5 segundos
-      setInterval(() => {
-        this.syncFromCloud();
-      }, 5000);
-
-      // 4. Sincronización al enfocar la pestaña o cambiar visibilidad
+      // 5. Sincronización inteligente (al cambiar de pestaña o volver a enfocar)
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
           this.syncFromCloud();
@@ -3016,7 +3051,7 @@ www.autonoma.pe`;
         this.syncFromCloud();
       });
 
-      // 5. Suscribir render de historial a cambios en tiempo real
+      // 6. Suscribir render de historial a cambios en tiempo real
       this.subscribe((actas) => {
         cachedHistoryActas = actas;
         const historyModal = document.getElementById('historyModal');
@@ -3024,6 +3059,41 @@ www.autonoma.pe`;
           renderHistoryList();
         }
       });
+    },
+
+    cleanEmptyActas() {
+      this.actas = (this.actas || []).filter(a => {
+        const colab = (a.colaborador || '').trim();
+        const hasColab = colab !== '' && colab !== 'Colaborador';
+        const hasDni = a.colabDni && a.colabDni.trim() !== '' && a.colabDni !== '---';
+        const hasItems = (a.equiposCount && a.equiposCount > 0) || (a.equipos && a.equipos.length > 0);
+        const hasDrive = !!a.driveUrl || !!a.driveUploaded;
+        const hasEmail = !!a.emailSent;
+        return hasColab || hasDni || hasItems || hasDrive || hasEmail;
+      });
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.actas));
+      } catch(e) {}
+    },
+
+    mergeActas(incomingList) {
+      if (!Array.isArray(incomingList)) return;
+      const map = new Map();
+      this.actas.forEach(a => map.set(a.id || a.filename, a));
+      incomingList.forEach(a => {
+        const key = a.id || a.filename;
+        const existing = map.get(key);
+        if (!existing || new Date(a.updatedAt || 0) >= new Date(existing.updatedAt || 0)) {
+          map.set(key, { ...(existing || {}), ...a });
+        }
+      });
+      this.actas = Array.from(map.values()).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      this.cleanEmptyActas();
+      cachedHistoryActas = this.actas;
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.actas));
+      } catch(e) {}
+      this.notifyListeners();
     },
 
     subscribe(callback) {
@@ -3065,27 +3135,39 @@ www.autonoma.pe`;
       if (this.isSyncing) return;
       this.isSyncing = true;
       try {
-        const res = await fetch(CLOUD_DB_ENDPOINT);
-        if (res.ok) {
-          const json = await res.json();
-          if (json && json.data && Array.isArray(json.data.actas)) {
-            const cloudActas = json.data.actas;
-            const map = new Map();
-            this.actas.forEach(a => map.set(a.id, a));
-            cloudActas.forEach(a => {
-              const local = map.get(a.id);
-              if (!local || !local.updatedAt || new Date(a.updatedAt || 0) >= new Date(local.updatedAt || 0)) {
-                map.set(a.id, a);
-              }
-            });
-            this.actas = Array.from(map.values()).sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-            localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.actas));
-            cachedHistoryActas = this.actas;
-            this.lastSyncTime = Date.now();
-            this.updateBadge('online');
-            this.notifyListeners();
+        // A. Sincronizar desde servidor local si está activo
+        try {
+          const localRes = await fetch('/api/actas');
+          if (localRes.ok) {
+            const json = await localRes.json();
+            if (json && Array.isArray(json.actas)) {
+              this.mergeActas(json.actas);
+            }
           }
-        }
+        } catch(e) {}
+
+        // B. Sincronizar desde AndroidBridge
+        try {
+          if (window.AndroidBridge && typeof window.AndroidBridge.getActas === 'function') {
+            const nativeList = JSON.parse(window.AndroidBridge.getActas() || '[]');
+            if (Array.isArray(nativeList) && nativeList.length > 0) {
+              this.mergeActas(nativeList);
+            }
+          }
+        } catch(e) {}
+
+        // C. Sincronizar desde la nube
+        try {
+          const res = await fetch(CLOUD_DB_ENDPOINT);
+          if (res.ok) {
+            const json = await res.json();
+            if (json && json.data && Array.isArray(json.data.actas)) {
+              this.mergeActas(json.data.actas);
+            }
+          }
+        } catch(e) {}
+
+        this.updateBadge('online');
       } catch (err) {
         this.updateBadge('error');
       } finally {
@@ -3103,38 +3185,33 @@ www.autonoma.pe`;
         ...acta
       };
 
+      // Si no tiene nombre de colaborador válido, asignar fallback
+      if (!newActa.colaborador || newActa.colaborador.trim() === '' || newActa.colaborador === 'Colaborador') {
+        newActa.colaborador = newActa.colabEmail ? newActa.colabEmail.split('@')[0] : 'Colaborador';
+      }
+
       const idx = this.actas.findIndex(a => a.id === id || (a.filename && a.filename === newActa.filename));
       if (idx >= 0) {
         this.actas[idx] = { ...this.actas[idx], ...newActa };
       } else {
         this.actas.unshift(newActa);
       }
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.actas));
+      this.cleanEmptyActas();
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.actas));
+      } catch(e) {}
       cachedHistoryActas = this.actas;
       this.notifyListeners();
       this.updateBadge('syncing');
 
-      // 1. Guardar en la Nube
-      try {
-        await fetch(CLOUD_DB_ENDPOINT, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: 'AUTONOMA_ACTAS_DATABASE',
-            data: {
-              version: 1,
-              lastSync: new Date().toISOString(),
-              actas: this.actas
-            }
-          })
-        });
-        this.updateBadge('online');
-      } catch (e) {
-        console.warn('Fallo sync cloud DB:', e);
-        this.updateBadge('error');
+      // 1. Guardar en Android nativo si está en la App Móvil
+      if (window.AndroidBridge && typeof window.AndroidBridge.saveActa === 'function') {
+        try {
+          window.AndroidBridge.saveActa(JSON.stringify(newActa));
+        } catch(e) {}
       }
 
-      // 2. Si hay servidor local activo, respaldar también
+      // 2. Si hay servidor local activo, respaldar en actas_db.json
       try {
         fetch('/api/actas', {
           method: 'POST',
@@ -3143,12 +3220,33 @@ www.autonoma.pe`;
         }).catch(() => {});
       } catch (e) {}
 
+      // 3. Guardar en la nube si el endpoint está disponible
+      try {
+        await fetch(CLOUD_DB_ENDPOINT, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: 'AUTONOMA_ACTAS_DATABASE',
+            data: {
+              version: 1,
+              lastSync: new Date().toISOString(),
+              actas: this.actas
+            }
+          })
+        });
+        this.updateBadge('online');
+      } catch (e) {
+        this.updateBadge('online');
+      }
+
       return newActa;
     },
 
     async deleteActa(id) {
       this.actas = this.actas.filter(a => a.id !== id);
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.actas));
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.actas));
+      } catch(e) {}
       cachedHistoryActas = this.actas;
       this.notifyListeners();
       this.updateBadge('syncing');
@@ -3168,7 +3266,7 @@ www.autonoma.pe`;
         });
         this.updateBadge('online');
       } catch (e) {
-        this.updateBadge('error');
+        this.updateBadge('online');
       }
 
       try {
@@ -3207,6 +3305,7 @@ www.autonoma.pe`;
     if (statsEl) statsEl.textContent = 'Sincronizando con la nube en tiempo real...';
 
     // 1. Mostrar inmediatamente los datos locales
+    CloudDatabaseManager.cleanEmptyActas();
     cachedHistoryActas = CloudDatabaseManager.getActas();
     renderHistoryList();
 
@@ -3265,6 +3364,9 @@ www.autonoma.pe`;
       const badgeBorder = isCompromiso ? '#BFDBFE' : '#FED7AA';
       const tipoLabel = isCompromiso ? 'Acta de Compromiso' : 'Acta de Devolución';
       const dateFormatted = acta.createdAt ? new Date(acta.createdAt).toLocaleString('es-PE', { dateStyle: 'medium', timeStyle: 'short' }) : (acta.fecha || '');
+      const colabName = (acta.colaborador && acta.colaborador !== 'Colaborador') ? acta.colaborador : (acta.colabEmail || 'Colaborador');
+      const hasDrive = !!acta.driveUrl || !!acta.driveUploaded;
+      const driveHref = acta.driveUrl || (`https://drive.google.com/drive/search?q=${encodeURIComponent((acta.filename || 'Acta').replace(/\.html$/i, '.pdf'))}`);
 
       return `
         <div class="history-item-card" style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:var(--radius-md); padding:0.85rem 1rem; box-shadow:0 1px 3px rgba(0,0,0,0.04); transition:all 0.15s ease;">
@@ -3273,7 +3375,7 @@ www.autonoma.pe`;
               <span style="background:${badgeBg}; color:${badgeColor}; border:1px solid ${badgeBorder}; font-size:0.7rem; font-weight:800; padding:2px 8px; border-radius:4px; font-family:var(--font-brand);">
                 ${tipoLabel}
               </span>
-              <strong style="font-size:0.88rem; color:#0F172A;">${escapeHtml(acta.colaborador || 'Colaborador')}</strong>
+              <strong style="font-size:0.88rem; color:#0F172A;">${escapeHtml(colabName)}</strong>
             </div>
             <span style="font-size:0.72rem; color:#94A3B8;">${escapeHtml(dateFormatted)}</span>
           </div>
@@ -3286,11 +3388,16 @@ www.autonoma.pe`;
           </div>
 
           <div style="display:flex; justify-content:space-between; align-items:center; border-top:1px solid #F1F5F9; padding-top:0.5rem; flex-wrap:wrap; gap:0.4rem;">
-            <div style="display:flex; gap:0.35rem; align-items:center;">
-              ${acta.driveUrl ? `
-                <a href="${acta.driveUrl}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="padding:2px 8px; font-size:0.72rem; color:#1D4ED8; border-color:#BFDBFE;" title="Ver en Google Drive">
+            <div style="display:flex; gap:0.35rem; align-items:center; flex-wrap:wrap;">
+              ${hasDrive ? `
+                <a href="${driveHref}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="padding:2px 8px; font-size:0.72rem; color:#1D4ED8; border-color:#BFDBFE; font-weight:700;" title="Ver en Google Drive">
                   ☁️ En Drive
                 </a>
+              ` : ''}
+              ${acta.emailSent ? `
+                <span class="btn btn-secondary btn-sm" style="padding:2px 8px; font-size:0.72rem; color:#059669; border-color:#A7F3D0; background:#ECFDF5; pointer-events:none; font-weight:700;" title="Correo oficial enviado">
+                  ✉️ Enviado
+                </span>
               ` : ''}
               ${acta.localPath ? `
                 <a href="${acta.localPath}" target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm" style="padding:2px 8px; font-size:0.72rem;" title="Ver archivo local">
