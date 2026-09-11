@@ -118,8 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let sigPadRecibe = null;
   let sigPadModal = null;
 
-  initApp();
-
   function initApp() {
     setupDateDefaults();
     initSignaturePads();
@@ -1308,7 +1306,7 @@ function doGet(e) {
     return OFFICIAL_DEFAULT_GAS_WEBHOOK;
   }
 
-  let cachedDriveConfig = {
+  var cachedDriveConfig = {
     webhookUrl: getEffectiveWebhookUrl(),
     rootFolderId: '1XzJVp9KewZiSoFCVgLCK-vd28bLnMr1P'
   };
@@ -1856,7 +1854,7 @@ function doGet(e) {
   }
 
   // Variable para guardar el HTML enriquecido del último correo preparado
-  let currentEmailHtmlBody = '';
+  var currentEmailHtmlBody = '';
 
   // Generador de tabla estructurada de equipos en texto plano limpio y adaptable
   function buildEquiposTextTable(list) {
@@ -2788,12 +2786,12 @@ www.autonoma.pe`;
   // ============================================================
   // PWA SERVICE WORKER & INSTALACIÓN NATIVA
   // ============================================================
-  let deferredInstallPrompt = null;
+  var deferredInstallPrompt = null;
 
   function initPwa() {
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(reg => {
+        navigator.serviceWorker.register('./sw.js').then(reg => {
           console.log('Service Worker de Actas DTI registrado:', reg.scope);
         }).catch(err => {
           console.warn('Registro SW:', err);
@@ -2903,7 +2901,7 @@ www.autonoma.pe`;
   const CLOUD_DB_ENDPOINT = 'https://api.restful-api.dev/objects/ff808181a067127101a08f30555871e8';
   const LOCAL_STORAGE_KEY = 'ua_actas_cloud_cache_v1';
 
-  const CloudDatabaseManager = {
+  var CloudDatabaseManager = {
     actas: [],
     listeners: [],
     isSyncing: false,
@@ -3244,4 +3242,7 @@ www.autonoma.pe`;
       });
     });
   }
+
+  // Inicialización de la aplicación una vez declaradas todas las variables y módulos
+  initApp();
 });
