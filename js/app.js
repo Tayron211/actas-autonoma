@@ -2420,71 +2420,118 @@ www.autonoma.pe`;
 
     state.isGeneratingPdf = true;
 
-    // Preservar la posición exacta de scroll y viewport del usuario
-    const savedScrollX = window.scrollX || window.pageXOffset || 0;
-    const savedScrollY = window.scrollY || window.pageYOffset || 0;
-    const originalScrollTo = window.scrollTo;
-    window.scrollTo = function() {}; // Bloquea scrolls automáticos intrusivos de html2canvas
-
-    // Asegurar que la hoja visible quede 100% estática sin transiciones de ningún tipo
-    sheet.style.setProperty('transition', 'none', 'important');
-
-    // Contenedor completamente fuera de pantalla (no altera el ancho visible en móviles)
-    const printContainer = document.createElement('div');
-    printContainer.id = 'pdfIsolatedContainer';
-    printContainer.style.position = 'fixed';
-    printContainer.style.top = '0';
-    printContainer.style.left = '0';
-    printContainer.style.width = '794px';
-    printContainer.style.height = '1122px';
-    printContainer.style.background = '#FFFFFF';
-    printContainer.style.zIndex = '-9999';
-    printContainer.style.pointerEvents = 'none';
-    printContainer.style.overflow = 'hidden';
-    printContainer.style.opacity = '0';
-
-    const clone = sheet.cloneNode(true);
-    clone.id = 'officialDocumentSheetPdfClone';
-    clone.style.transform = 'none';
-    clone.style.margin = '0 auto';
-    clone.style.boxShadow = 'none';
-    clone.style.border = 'none';
-    clone.style.borderRadius = '0';
-    clone.style.outline = 'none';
-    clone.style.width = '794px';
-    clone.style.transition = 'none';
-
-    const isSinglePage = sheet.scrollHeight <= 1180;
-    if (isSinglePage) {
-      clone.style.setProperty('height', '1122px', 'important');
-      clone.style.setProperty('min-height', '1122px', 'important');
-      clone.style.setProperty('max-height', '1122px', 'important');
-      clone.style.setProperty('overflow', 'hidden', 'important');
-    }
-
-    printContainer.appendChild(clone);
-    document.body.appendChild(printContainer);
-
-    const opt = {
-      margin: 0,
-      filename: pdfFilename,
-      image: { type: 'jpeg', quality: 0.92 },
-      html2canvas: {
-        scale: 1.8,
-        useCORS: true,
-        logging: false,
-        scrollY: 0,
-        scrollX: 0,
-        windowWidth: 794
-      },
-      jsPDF: {
-        unit: 'mm',
-        format: 'a4',
-        orientation: 'portrait'
-      }
-    };
+    // Crear un iframe aislado con resolución estándar de escritorio (800px)
+    // para garantizar que en cualquier dispositivo móvil o pantalla pequeña el A4 se renderice 100% completo y centrado
+    const iframe = document.createElement('iframe');
+    iframe.id = 'pdfIsolatedRenderFrame';
+    iframe.style.position = 'fixed';
+    iframe.style.left = '-9999px';
+    iframe.style.top = '0';
+    iframe.style.width = '800px';
+    iframe.style.height = '1250px';
+    iframe.style.border = 'none';
+    iframe.style.visibility = 'hidden';
+    iframe.style.pointerEvents = 'none';
+    iframe.style.zIndex = '-9999';
+    document.body.appendChild(iframe);
 
     try {
+      const iDoc = iframe.contentDocument || iframe.contentWindow.document;
+
+      // Inyectar hojas de estilo en el iframe
+      document.querySelectorAll('link[rel="stylesheet"]').forEach(l => {
+        try { iDoc.head.appendChild(l.cloneNode(true)); } catch (e) {}
+      });
+      document.querySelectorAll('style').forEach(s => {
+        try { iDoc.head.appendChild(s.cloneNode(true)); } catch (e) {}
+      });
+
+      // Estilo de normalización para renderizado A4 perfecto e inmune al viewport del teléfono
+      const resetStyle = iDoc.createElement('style');
+      resetStyle.textContent = `
+        html, body {
+          margin: 0 !important;
+          padding: 0 !important;
+          background: #FFFFFF !important;
+          overflow: hidden !important;
+          width: 800px !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        .a4-sheet {
+          margin: 0 auto !important;
+          transform: none !important;
+          box-shadow: none !important;
+          border: none !important;
+          border-radius: 0 !important;
+          width: 794px !important;
+          min-width: 794px !important;
+          max-width: 794px !important;
+          min-height: 1122px !important;
+          height: auto !important;
+          overflow: visible !important;
+        }
+      `;
+      iDoc.head.appendChild(resetStyle);
+
+      // Clonar la hoja del documento oficial
+      const clone = sheet.cloneNode(true);
+      clone.id = 'officialDocumentSheetPdfClone';
+      clone.style.transform = 'none';
+      clone.style.margin = '0 auto';
+      clone.style.marginLeft = 'auto';
+      clone.style.marginRight = 'auto';
+      clone.style.marginBottom = '0';
+      clone.style.boxShadow = 'none';
+      clone.style.border = 'none';
+      clone.style.borderRadius = '0';
+      clone.style.outline = 'none';
+      clone.style.width = '794px';
+      clone.style.transition = 'none';
+
+      const isSinglePage = sheet.scrollHeight <= 1180;
+      if (isSinglePage) {
+        clone.style.setProperty('height', '1122px', 'important');
+        clone.style.setProperty('min-height', '1122px', 'important');
+        clone.style.setProperty('max-height', '1122px', 'important');
+        clone.style.setProperty('overflow', 'hidden', 'important');
+      }
+
+      iDoc.body.appendChild(clone);
+
+      // Esperar a que las imágenes del clone estén completamente cargadas si alguna estuviera pendiente
+      const imgs = Array.from(clone.querySelectorAll('img'));
+      await Promise.all(imgs.map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise(r => {
+          img.onload = r;
+          img.onerror = r;
+          setTimeout(r, 1000);
+        });
+      }));
+
+      // Pequeña espera para garantizar renderizado DOM y fuentes en el iframe
+      await new Promise(res => setTimeout(res, 200));
+
+      const opt = {
+        margin: 0,
+        filename: pdfFilename,
+        image: { type: 'jpeg', quality: 0.95 },
+        html2canvas: {
+          scale: 1.8,
+          useCORS: true,
+          logging: false,
+          scrollY: 0,
+          scrollX: 0,
+          windowWidth: 800
+        },
+        jsPDF: {
+          unit: 'mm',
+          format: 'a4',
+          orientation: 'portrait'
+        }
+      };
+
       let pdfBase64 = null;
       let pdfDataUri = null;
 
@@ -2543,13 +2590,9 @@ www.autonoma.pe`;
         pdfDataUri
       };
     } finally {
-      window.scrollTo = originalScrollTo;
-      try {
-        originalScrollTo.call(window, savedScrollX, savedScrollY);
-      } catch (eScroll) {}
       state.isGeneratingPdf = false;
-      if (printContainer && printContainer.parentNode) {
-        printContainer.parentNode.removeChild(printContainer);
+      if (iframe && iframe.parentNode) {
+        iframe.parentNode.removeChild(iframe);
       }
     }
   }
