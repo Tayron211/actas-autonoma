@@ -1,0 +1,288 @@
+/* ============================================================
+   UNIVERSIDAD AUTÓNOMA — ESTADOS DE INTERFAZ
+   Basado en Manual de Marca 2026
+   Tokens: variables.css
+   ============================================================
+   Criterios aplicados del manual:
+   - Foco (focus): naranja con opacidad reducida — accesible
+   - Carga (loading): animación usando el naranja institucional
+   - Deshabilitado: 40% de opacidad (coherente con botones del manual)
+   - Vacío/sin datos: naranja para el título, paleta secundaria
+   - Los estados se aplican sobre cualquier elemento interactivo.
+   ============================================================ */
+
+/* ----------------------------------------------------------
+   FOCUS RING GLOBAL
+   Naranja institucional. Cumple con WCAG 2.1 AA.
+   Aplica a cualquier elemento que reciba foco por teclado.
+---------------------------------------------------------- */
+:focus-visible {
+  outline: 2.5px solid var(--ua-naranja);
+  outline-offset: 3px;
+  border-radius: var(--ua-radius-sm);
+}
+
+/* Quitar outline nativo solo cuando hay :focus-visible */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ----------------------------------------------------------
+   ESTADO — DESHABILITADO
+   Opacidad 40% según el sistema de botones del manual.
+   Cursor indicativo.
+---------------------------------------------------------- */
+[disabled],
+[aria-disabled="true"],
+.ua-disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ----------------------------------------------------------
+   ESTADO — CARGANDO (loading)
+   Spinner en naranja institucional.
+---------------------------------------------------------- */
+
+/* Spinner SVG inline vía border */
+.ua-spinner {
+  display: inline-block;
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2.5px solid rgba(255, 102, 0, 0.2);
+  border-top-color: var(--ua-naranja);
+  border-radius: 50%;
+  animation: ua-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+.ua-spinner--sm { width: 0.875rem; height: 0.875rem; border-width: 2px; }
+.ua-spinner--lg { width: 2rem;     height: 2rem;     border-width: 3px; }
+.ua-spinner--xl { width: 3rem;     height: 3rem;     border-width: 4px; }
+
+/* Spinner blanco — sobre fondos naranja */
+.ua-spinner--white {
+  border-color: rgba(255, 255, 255, 0.3);
+  border-top-color: var(--ua-blanco);
+}
+
+@keyframes ua-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Overlay de carga sobre un contenedor */
+.ua-loading-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.75);
+  border-radius: inherit;
+  z-index: 10;
+}
+
+/* Botón en estado de carga */
+.ua-btn--loading {
+  position: relative;
+  color: transparent;
+  pointer-events: none;
+}
+
+.ua-btn--loading::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 1rem;
+  height: 1rem;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: var(--ua-blanco);
+  border-radius: 50%;
+  animation: ua-spin 0.7s linear infinite;
+}
+
+/* ----------------------------------------------------------
+   ESTADO — VACÍO (empty state)
+   Para secciones o listas sin contenido todavía.
+---------------------------------------------------------- */
+.ua-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ua-space-4);
+  padding: var(--ua-space-12) var(--ua-space-6);
+  text-align: center;
+}
+
+.ua-empty-icon {
+  width: 3.5rem;
+  height: 3.5rem;
+  color: var(--ua-naranja);
+  opacity: 0.6;
+}
+
+.ua-empty-title {
+  font-family: var(--ua-font-web);
+  font-size: var(--ua-text-h3);
+  font-weight: var(--ua-font-bold);
+  color: var(--ua-naranja);
+}
+
+.ua-empty-desc {
+  font-family: var(--ua-font-web);
+  font-size: var(--ua-text-body);
+  font-weight: var(--ua-font-regular);
+  color: #6B7280;
+  max-width: 360px;
+}
+
+/* ----------------------------------------------------------
+   ESTADO — HOVER GENÉRICO (elementos no-botón)
+   Para listas, cards, filas de tabla, etc.
+---------------------------------------------------------- */
+.ua-hoverable {
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+}
+
+.ua-hoverable:hover {
+  background-color: #FFF0E6;
+  box-shadow: 0 2px 8px rgba(255, 102, 0, 0.08);
+}
+
+/* ----------------------------------------------------------
+   ESTADO — SELECCIONADO / ACTIVO
+   Para ítem de lista, tarjeta seleccionada, etc.
+---------------------------------------------------------- */
+.ua-selected {
+  border: 2px solid var(--ua-naranja) !important;
+  background-color: #FFF0E6;
+}
+
+.ua-selected-indicator {
+  display: inline-block;
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background-color: var(--ua-naranja);
+  flex-shrink: 0;
+}
+
+/* ----------------------------------------------------------
+   ESTADO — RESALTADO / HIGHLIGHT
+   Para resultados de búsqueda u texto destacado
+---------------------------------------------------------- */
+mark, .ua-highlight {
+  background-color: var(--ua-amarillo);
+  color: var(--ua-negro);
+  border-radius: 2px;
+  padding: 0 2px;
+}
+
+/* ----------------------------------------------------------
+   ESTADO — TOOLTIP
+   Fondo naranja o oscuro según contraste necesario
+---------------------------------------------------------- */
+.ua-tooltip {
+  position: relative;
+  display: inline-flex;
+}
+
+.ua-tooltip-content {
+  position: absolute;
+  bottom: calc(100% + var(--ua-space-2));
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: var(--ua-marron-oscuro);
+  color: var(--ua-blanco);
+  font-family: var(--ua-font-web);
+  font-size: var(--ua-text-caption);
+  font-weight: var(--ua-font-regular);
+  padding: var(--ua-space-2) var(--ua-space-3);
+  border-radius: var(--ua-radius-md);
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.15s ease, visibility 0.15s;
+  z-index: 200;
+}
+
+.ua-tooltip:hover .ua-tooltip-content,
+.ua-tooltip:focus-within .ua-tooltip-content {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Flecha del tooltip */
+.ua-tooltip-content::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--ua-marron-oscuro);
+}
+
+/* ----------------------------------------------------------
+   ESTADO — SKELETON (carga anticipada de contenido)
+   Usa el amarillo muy suave como base del shimmer.
+---------------------------------------------------------- */
+.ua-skeleton {
+  background: linear-gradient(90deg, #F3F4F6 25%, #E5E7EB 50%, #F3F4F6 75%);
+  background-size: 200% 100%;
+  animation: ua-skeleton-shimmer 1.4s ease infinite;
+  border-radius: var(--ua-radius-md);
+}
+
+@keyframes ua-skeleton-shimmer {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+.ua-skeleton-text    { height: 1em;    border-radius: var(--ua-radius-sm); }
+.ua-skeleton-heading { height: 1.5em;  border-radius: var(--ua-radius-sm); }
+.ua-skeleton-avatar  { border-radius: 50%; }
+.ua-skeleton-btn     { height: 2.5rem; border-radius: var(--ua-radius-xl); }
+
+/* ----------------------------------------------------------
+   UTILIDADES — visibilidad accesible
+---------------------------------------------------------- */
+
+/* Visible solo para lectores de pantalla */
+.ua-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Skip link accesible */
+.ua-skip-link {
+  position: absolute;
+  top: -100%;
+  left: var(--ua-space-4);
+  z-index: 9999;
+  padding: var(--ua-space-3) var(--ua-space-6);
+  background-color: var(--ua-naranja);
+  color: var(--ua-blanco);
+  font-family: var(--ua-font-web);
+  font-weight: var(--ua-font-bold);
+  border-radius: var(--ua-radius-lg);
+  text-decoration: none;
+  transition: top 0.15s ease;
+}
+
+.ua-skip-link:focus {
+  top: var(--ua-space-4);
+}

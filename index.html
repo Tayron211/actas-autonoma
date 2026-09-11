@@ -1,0 +1,1039 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Sistema de Gestión de Actas — Universidad Autónoma del Perú</title>
+
+  <!-- Progressive Web App & Iconos Oficiales UA con Esquinas Redondeadas -->
+  <link rel="manifest" href="manifest.webmanifest">
+  <meta name="color-scheme" content="light">
+  <meta name="theme-color" content="#FFFFFF">
+  <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#FFFFFF" media="(prefers-color-scheme: dark)">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Actas DTI">
+  <link rel="icon" type="image/png" sizes="64x64" href="brand/favicon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="brand/pwa-icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="brand/apple-touch-icon.png">
+
+  <!-- Tipografías Oficiales Universidad Autónoma: Bricolage Grotesque, Montserrat e Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700;12..96,800&family=Montserrat:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap"
+    rel="stylesheet">
+
+  <!-- Hojas de estilo de Marca Autónoma y Aplicación -->
+  <link rel="stylesheet" href="brand/css/variables.css?v=5">
+  <link rel="stylesheet" href="brand/css/typography.css?v=5">
+  <link rel="stylesheet" href="brand/css/buttons.css?v=5">
+  <link rel="stylesheet" href="brand/css/forms.css?v=5">
+  <link rel="stylesheet" href="css/app.css?v=19">
+
+  <script>
+    // Diálogo Actas Autónoma en lugar de <domain> dice
+    window.alert = function(msg) {
+      const modal = document.getElementById('customAlertModal');
+      const msgEl = document.getElementById('customAlertMessage');
+      if (modal && msgEl) {
+        msgEl.textContent = String(msg || '');
+        modal.classList.add('active');
+      } else {
+        setTimeout(function() { window.alert(msg); }, 50);
+      }
+    };
+  </script>
+</head>
+
+<body>
+
+  <!-- ============================================================
+       SPLASH SCREEN OFICIAL UNIVERSIDAD AUTÓNOMA DEL PERÚ
+       ============================================================ -->
+  <div id="appSplashScreen" style="position: fixed; inset: 0; z-index: 999999; background: #FFFFFF; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.45s ease-out, visibility 0.45s ease-out;">
+    <div style="text-align: center; padding: 1.5rem; max-width: 360px; display: flex; flex-direction: column; align-items: center;">
+      <img src="brand/splash_logo.png" alt="Universidad Autónoma del Perú" style="width: 260px; max-width: 80vw; height: auto; display: block; margin: 0 auto 1.5rem auto;">
+      <div style="display: flex; justify-content: center; margin-bottom: 1.25rem;">
+        <div style="width: 38px; height: 38px; border: 3.5px solid #F1F5F9; border-top-color: #EA580C; border-radius: 50%; animation: uaSpinSplash 0.75s linear infinite;"></div>
+      </div>
+      <p style="margin: 0; font-size: 0.78rem; font-weight: 700; color: #475569; letter-spacing: 0.05em; text-transform: uppercase;">Dirección de Tecnologías de Información</p>
+    </div>
+  </div>
+  <style>
+    @keyframes uaSpinSplash {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+  <script>
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        var splash = document.getElementById('appSplashScreen');
+        if (splash) {
+          splash.style.opacity = '0';
+          splash.style.pointerEvents = 'none';
+          setTimeout(function() {
+            if (splash && splash.parentNode) splash.parentNode.removeChild(splash);
+          }, 450);
+        }
+      }, 1200);
+    });
+  </script>
+
+  <!-- ============================================================
+       ENCABEZADO / BARRA SUPERIOR RESPONSIVE
+       ============================================================ -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-section">
+        <img src="brand/Logo/Logo-Color.png" alt="Universidad Autónoma del Perú" class="brand-logo">
+        <div class="brand-divider"></div>
+        <div class="brand-title-wrap">
+          <h1>Gestión de Actas</h1>
+          <p class="brand-subtitle">Dirección de Tecnologías de la Información (DTI)</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <button type="button" id="btnInstallPwa" class="btn btn-secondary btn-sm" title="Acceso Móvil e Instalación de la App" style="background:#FFF7ED; border-color:#FED7AA; color:#C2410C; font-weight:700;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
+            <line x1="12" y1="18" x2="12.01" y2="18"></line>
+          </svg>
+          <span class="btn-text">App Móvil</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Selector de pestañas para móviles (Inamovible) -->
+    <nav class="mobile-view-tabs">
+      <button type="button" id="tabBtnForm" class="tab-btn active">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+        </svg>
+        <span>Llenar Formulario</span>
+      </button>
+      <button type="button" id="tabBtnPreview" class="tab-btn">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+        </svg>
+        <span>Ver Documento A4</span>
+      </button>
+    </nav>
+  </header>
+
+  <!-- ============================================================
+       CONTENEDOR PRINCIPAL
+       ============================================================ -->
+  <main class="main-wrapper">
+
+    <!-- ============================================================
+         PANEL IZQUIERDO: FORMULARIO DINÁMICO
+         ============================================================ -->
+    <section class="form-panel">
+
+      <!-- Selección de Tipo de Acta -->
+      <div class="doc-type-selector">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+          <span class="selector-label" style="margin-bottom: 0;">Tipo de Documento Oficial</span>
+          <button type="button" id="btnClearForm" class="btn btn-secondary btn-sm" style="padding: 2px 10px; font-size: 0.74rem; color: #64748B;" title="Limpiar todos los campos del formulario">
+            Limpiar Formulario
+          </button>
+        </div>
+        <div class="selector-group">
+          <label class="selector-option active" for="type_compromiso">
+            <input type="radio" name="tipo_acta" id="type_compromiso" value="compromiso" checked>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="9" y1="15" x2="15" y2="15"></line>
+            </svg>
+            <span>Acta de Compromiso</span>
+          </label>
+          <label class="selector-option" for="type_entrega">
+            <input type="radio" name="tipo_acta" id="type_entrega" value="entrega">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path
+                d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z">
+              </path>
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+              <line x1="12" y1="22.08" x2="12" y2="12"></line>
+            </svg>
+            <span>Acta de Devolución</span>
+          </label>
+        </div>
+      </div>
+
+      <form id="actasForm" onsubmit="return false;">
+
+        <!-- 1. Datos Generales de la Reunión / Suscripción -->
+        <div class="form-card">
+          <div class="card-header-badge">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            <span>1. Datos de Fecha y Lugar</span>
+          </div>
+
+          <!-- Campos para Acta de Compromiso -->
+          <div id="compromisoSpecificFields">
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="acta_hora">Hora del Acta <span class="hint">Ej: 10:30</span></label>
+                <input type="text" id="acta_hora" class="form-control" placeholder="10:30">
+              </div>
+              <div class="form-group">
+                <label for="acta_dia">Día <span class="hint">Ej: 15</span></label>
+                <input type="text" id="acta_dia" class="form-control" placeholder="15">
+              </div>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-group">
+                <label for="acta_mes">Mes <span class="hint">Ej: Agosto</span></label>
+                <input type="text" id="acta_mes" class="form-control" placeholder="Agosto">
+              </div>
+              <div class="form-group">
+                <label for="acta_anio">Año</label>
+                <input type="text" id="acta_anio" class="form-control" value="2026">
+              </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 0.5rem;">
+              <label>Fecha Original de Asignación de Bienes</label>
+              <div class="form-grid-3">
+                <input type="text" id="orig_dia" class="form-control" placeholder="Día (15)">
+                <input type="text" id="orig_mes" class="form-control" placeholder="Mes (Agosto)">
+                <input type="text" id="orig_anio" class="form-control" placeholder="Año (2026)">
+              </div>
+            </div>
+          </div>
+
+          <!-- Campos para Cargo de Entrega / Devolución -->
+          <div id="entregaSpecificFields" class="hidden" style="display: none;">
+            <div class="form-group">
+              <label for="entrega_fechahora">Fecha y Hora de la Devolución</label>
+              <input type="text" id="entrega_fechahora" class="form-control"
+                placeholder="las 11:30 horas del día 15 de Agosto del 2026">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 0.5rem;">
+            <label for="acta_campus">Sede / Campus Universitario</label>
+            <input type="text" id="acta_campus" class="form-control"
+              value="Campus de la Universidad Autónoma del Perú, ubicado en la Carretera Panamericana Norte Km. 30, en el distrito de Puente Piedra, departamento de Lima">
+          </div>
+        </div>
+
+        <!-- 2. Datos del Representante / DTI -->
+        <div class="form-card">
+          <div class="card-header-badge">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <span>2. Representante Institucional (DTI)</span>
+          </div>
+
+          <div class="form-group">
+            <label for="rep_nombre">Nombre Completo del Representante</label>
+            <input type="text" id="rep_nombre" class="form-control" placeholder="Ej: Ing. Bruno Paucar">
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label id="labelRepCargo" for="rep_cargo">Cargo Institucional</label>
+              <input type="text" id="rep_cargo" class="form-control" placeholder="Ej: Coordinador de DTI">
+            </div>
+            <div class="form-group">
+              <label for="rep_dni">N° DNI</label>
+              <input type="tel" id="rep_dni" class="form-control" placeholder="70352987" maxlength="8">
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Datos del Colaborador -->
+        <div class="form-card">
+          <div class="card-header-badge">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            <span>3. Datos del Colaborador@</span>
+          </div>
+
+          <div class="form-group">
+            <label for="colab_nombre">Nombre Completo del Colaborador@</label>
+            <input type="text" id="colab_nombre" class="form-control"
+              placeholder="Ej: Luz Eileen Emilia Zevallos Avalos">
+          </div>
+
+          <div class="form-grid-2">
+            <div class="form-group">
+              <label for="colab_cargo">Cargo / Área del Colaborador@</label>
+              <input type="text" id="colab_cargo" class="form-control" placeholder="Ej: Asesora Corporativa">
+            </div>
+            <div class="form-group">
+              <label for="colab_dni">N° DNI</label>
+              <input type="tel" id="colab_dni" class="form-control" placeholder="70167159" maxlength="8">
+            </div>
+          </div>
+
+          <div class="form-group" style="margin-top: 0.75rem;">
+            <label for="colab_email">Correo Institucional del Colaborador@ <span class="hint">Para envío directo de
+                copia</span></label>
+            <input type="email" id="colab_email" class="form-control" placeholder="Ej: luz.zevallos@autonoma.pe">
+          </div>
+        </div>
+
+        <!-- 4. Tabla de Equipos y Bienes -->
+        <div class="form-card">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
+            <div class="card-header-badge" style="margin-bottom: 0; padding-bottom: 0; border: none;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+              </svg>
+              <span>4. Detalle de Bienes y Equipos</span>
+            </div>
+            <button type="button" id="btnAddEquipo" class="btn btn-primary btn-sm">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>+ Agregar</span>
+            </button>
+          </div>
+
+          <div id="equipmentsListContainer" class="equipments-list-container">
+            <!-- Renderizado dinámico en tarjetas limpias y cómodas para móvil y PC -->
+          </div>
+
+          <!-- Estado General de los Equipos al Entregar / Devolver (Solo visible en Acta de Devolución) -->
+          <div id="containerEstadoGeneral" class="form-group" style="display: none; margin-top: 1.25rem; padding: 1rem 1.15rem; background: #FFF7ED; border: 1.5px solid #FED7AA; border-radius: var(--radius-md);">
+            <label for="entrega_estado_gral" style="display: flex; align-items: center; justify-content: space-between; font-weight: 700; color: #9A3412; margin-bottom: 0.45rem;">
+              <span>Estado General de los Bienes / Equipos</span>
+              <span class="hint" style="color: #EA580C; font-weight: 600;">Se refleja en el documento</span>
+            </label>
+            <input type="text" id="entrega_estado_gral" class="form-control" value="OPERATIVO Y EN BUEN ESTADO FÍSICO" placeholder="Ej: OPERATIVO Y EN BUEN ESTADO FÍSICO">
+            <div class="estado-chips-wrapper" style="display: flex; gap: 0.4rem; flex-wrap: wrap; margin-top: 0.6rem;">
+              <button type="button" class="estado-chip-btn" data-val="OPERATIVO Y EN BUEN ESTADO FÍSICO">✅ Operativo y Buen Estado</button>
+              <button type="button" class="estado-chip-btn" data-val="OPERATIVO CON DESGASTE DE USO">⚡ Con Desgaste de Uso</button>
+              <button type="button" class="estado-chip-btn" data-val="INOPERATIVO / PARA REVISIÓN TÉCNICA">⚠️ Inoperativo / Revisión</button>
+              <button type="button" class="estado-chip-btn" data-val="REGULAR ESTADO (ACCESORIOS COMPLETOS)">📦 Regular Estado</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Firmas Digitales con Modo Teléfono -->
+        <div class="form-card">
+          <div class="card-header-badge">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+              <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"></path>
+              <path d="M2 2l7.586 7.586"></path>
+              <circle cx="11" cy="11" r="2"></circle>
+            </svg>
+            <span>5. Firmas Digitales Manuscritas</span>
+          </div>
+
+          <!-- Firma 1 -->
+          <div class="signature-box">
+            <div class="sig-header">
+              <span id="sigTitleEntrega" class="sig-title">Firma Quien Entrega (DTI)</span>
+              <div class="sig-actions" style="display: flex; gap: 0.35rem;">
+                <button type="button" id="btnMobileFirmaEntrega" class="btn btn-secondary btn-sm" title="Firmar en pantalla completa">
+                  📱 Pantalla Completa
+                </button>
+                <button type="button" id="btnClearFirmaEntrega" class="btn btn-secondary btn-sm" title="Limpiar trazo">
+                  Borrar
+                </button>
+              </div>
+            </div>
+            <div class="sig-canvas-wrap">
+              <canvas id="canvas_entrega" width="460" height="110"></canvas>
+              <div id="hint_entrega" class="sig-placeholder-hint">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+                </svg>
+                <span>Firma aquí con el dedo o ratón</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Firma 2 -->
+          <div class="signature-box">
+            <div class="sig-header">
+              <span id="sigTitleRecibe" class="sig-title">Firma Colaborador (Quien Recibe)</span>
+              <div class="sig-actions" style="display: flex; gap: 0.35rem;">
+                <button type="button" id="btnMobileFirmaRecibe" class="btn btn-secondary btn-sm" title="Firmar en pantalla completa">
+                  📱 Pantalla Completa
+                </button>
+                <button type="button" id="btnClearFirmaRecibe" class="btn btn-secondary btn-sm" title="Limpiar trazo">
+                  Borrar
+                </button>
+              </div>
+            </div>
+            <div class="sig-canvas-wrap">
+              <canvas id="canvas_recibe" width="460" height="110"></canvas>
+              <div id="hint_recibe" class="sig-placeholder-hint">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 19l7-7 3 3-7 7-3-3z"></path>
+                </svg>
+                <span>Firma aquí con el dedo o ratón</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </form>
+    </section>
+
+    <!-- ============================================================
+         PANEL DERECHO: VISTA PREVIA DEL DOCUMENTO OFICIAL A4
+         ============================================================ -->
+    <section class="preview-panel">
+
+      <!-- Barra superior de la vista previa -->
+      <div class="preview-toolbar">
+        <div class="toolbar-info">
+          <span class="status-dot"></span>
+          <span>Vista Previa A4</span>
+        </div>
+        <div class="toolbar-actions">
+          <div class="zoom-controls">
+            <button type="button" id="btnZoomOut" class="btn-zoom" title="Alejar">-</button>
+            <span id="zoomLevelText" class="zoom-text">100%</span>
+            <button type="button" id="btnZoomIn" class="btn-zoom" title="Acercar">+</button>
+            <button type="button" id="btnZoomFit" class="btn-zoom-fit" title="Ajustar">Ajustar</button>
+          </div>
+          <!-- Botón Imprimir a la izquierda -->
+          <button type="button" id="btnPrintDocToolbar" class="btn btn-secondary btn-sm" title="Imprimir documento oficial">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 6 2 18 2 18 9"></polyline>
+              <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+              <rect x="6" y="14" width="12" height="8"></rect>
+            </svg>
+            <span>Imprimir</span>
+          </button>
+          <!-- Botón Descargar PDF naranja a la derecha del botón Imprimir -->
+          <button type="button" id="btnDirectDownloadPdf" class="btn btn-primary btn-sm btn-pdf-orange" title="Descargar documento oficial en PDF">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            <span>Descargar PDF</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Hoja A4 Oficial -->
+      <div class="document-container">
+        <div class="a4-sheet" id="officialDocumentSheet">
+
+          <!-- Encabezado Oficial (Logo en esquina superior derecha) -->
+          <header class="doc-header">
+            <img src="brand/Logo/Logo-Color.png" alt="Universidad Autónoma del Perú" class="doc-logo">
+          </header>
+
+          <!-- Contenido Central del Documento -->
+          <main class="doc-content">
+            <h2 id="preview_doc_title" class="doc-title">ACTA DE COMPROMISO</h2>
+
+            <div id="preview_doc_body">
+              <!-- Se genera en tiempo real con app.js -->
+            </div>
+
+            <!-- Sección de Firmas al Pie -->
+            <div class="doc-signatures-section">
+              <div class="signatures-grid" id="preview_signatures_grid">
+                <!-- Se inyecta con firmas y datos de ambas personas -->
+              </div>
+            </div>
+          </main>
+
+          <!-- Pie de Página Institucional Oficial -->
+          <footer class="doc-footer">
+            <div class="doc-footer-bar"></div>
+            <div class="doc-footer-content">
+              <img src="brand/logo_ua_vector.png" alt="UA" class="doc-footer-emblem">
+              <div class="doc-footer-info">
+                <div class="footer-line">Campus Lima Norte: Carretera Panamericana Norte Km. 30,</div>
+                <div class="footer-line">Teléfono: 01 715 3335 Anexo. 202</div>
+                <div class="footer-line">Whatsapp: 933 890 007</div>
+                <div class="footer-line footer-link">www.autonoma.pe</div>
+              </div>
+            </div>
+          </footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- ============================================================
+       MODAL: MODO TELÉFONO / FIRMA EN PANTALLA COMPLETA
+       ============================================================ -->
+  <div id="signatureModal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modal_sig_title">Firma Digital Móvil</h3>
+        <button type="button" id="btnModalClose" class="modal-close-btn" title="Cerrar">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-instructions">
+          <span id="modal_sig_person">Firmante: Persona</span>
+          <span class="tip-tag">📱 Dibuja con el dedo o lápiz</span>
+        </div>
+        <div class="modal-canvas-wrap">
+          <canvas id="modal_canvas"></canvas>
+          <div class="modal-baseline"></div>
+          <div class="modal-baseline-label">Línea de Firma</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" id="btnModalClear" class="btn btn-secondary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="1 4 1 10 7 10"></polyline>
+            <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+          </svg>
+          <span>Borrar</span>
+        </button>
+        <div style="display: flex; gap: 0.5rem;">
+          <button type="button" id="btnModalCancel" class="btn btn-secondary">Cancelar</button>
+          <button type="button" id="btnModalSave" class="btn btn-primary">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>Confirmar Firma</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: GOOGLE DRIVE INSTITUCIONAL INTELIGENTE
+       ============================================================ -->
+  <div id="driveModal" class="modal-overlay">
+    <div class="modal-card modal-drive-card">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <div class="drive-icon-badge">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 15V9L12 3 2 9v6l10 6 10-6z"></path>
+              <path d="M6 12l6 4 6-4"></path>
+              <line x1="12" y1="3" x2="12" y2="17"></line>
+            </svg>
+          </div>
+          <div>
+            <h3 style="margin:0; font-size:1.05rem; color:var(--ua-dark);">Guardado Inteligente en Google Drive</h3>
+            <p style="margin:0; font-size:0.75rem; color:var(--ua-gray-text);">Clasificación automática por categoría y
+              mes</p>
+          </div>
+        </div>
+        <button type="button" id="btnDriveModalClose" class="modal-close-btn" title="Cerrar">&times;</button>
+      </div>
+
+      <div class="modal-body" style="gap: 0.85rem;">
+
+        <!-- Tarjeta de Destino Inteligente Dinámico -->
+        <div class="smart-drive-destination">
+          <div class="destination-header">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+            </svg>
+            <span>Ruta Inteligente de Guardado</span>
+          </div>
+
+          <div class="folder-tree-box">
+            <div class="tree-node root">
+              <span class="tree-icon">📂</span>
+              <span class="tree-name"><strong>Gestión de Actas DTI</strong></span>
+              <span class="tree-tag">Carpeta Principal</span>
+            </div>
+            <div class="tree-node branch-1">
+              <span class="tree-line">↳</span>
+              <span class="tree-icon">📁</span>
+              <strong id="treeCategoryName" class="tree-name">Actas de Compromiso</strong>
+              <span class="tree-tag-cat" id="treeCategoryTag">Categoría</span>
+            </div>
+            <div class="tree-node branch-2">
+              <span class="tree-line">↳</span>
+              <span class="tree-icon">📅</span>
+              <strong id="treeMonthName" class="tree-name">Agosto 2026</strong>
+              <span class="tree-tag-month">Mes / Año</span>
+            </div>
+            <div class="tree-node branch-3">
+              <span class="tree-line">↳</span>
+              <span class="tree-icon">📄</span>
+              <span id="treeFileName" class="tree-file">Acta_Compromiso_...html</span>
+            </div>
+          </div>
+
+          <div class="destination-status-note">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 14 14"></polyline>
+            </svg>
+            <span>El sistema crea la subcarpeta del <strong>mes</strong> de forma automática si aún no existe. Si ya fue
+              creada, guarda el archivo directamente dentro de ella.</span>
+          </div>
+        </div>
+
+        <!-- Estado de Guardado / Progreso -->
+        <div id="driveSaveProgress" class="drive-progress-box" style="display: none;">
+          <div class="spinner-saving"></div>
+          <div class="progress-text-wrap">
+            <strong id="driveProgressTitle">Conectando con Google Drive...</strong>
+            <p id="driveProgressSub">Verificando carpetas y subiendo documento oficial...</p>
+          </div>
+        </div>
+
+        <!-- Mensaje de Éxito / Resultado -->
+        <div id="driveSaveResult" class="drive-result-box" style="display: none;">
+          <div class="result-icon-wrap">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <div class="result-text-wrap" style="flex:1;">
+            <strong id="driveResultTitle">¡Guardado inteligente completado!</strong>
+            <p id="driveResultDesc">El archivo fue organizado y respaldado correctamente.</p>
+            <div class="result-links" id="driveResultLinks"></div>
+          </div>
+        </div>
+
+        <!-- Configuración de Conexión Automática Google Drive -->
+        <div class="webhook-config-accordion">
+          <button type="button" id="btnToggleWebhookConfig" class="webhook-toggle-btn">
+            <div style="display:flex; align-items:center; gap:0.5rem;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path
+                  d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z">
+                </path>
+              </svg>
+              <span>Conexión Automática a Google Drive (Google Apps Script)</span>
+            </div>
+            <span id="webhookStatusIndicator" class="webhook-status-badge online">🟢 Conectado</span>
+          </button>
+
+          <div id="webhookConfigPanel" class="webhook-config-panel" style="display: none;">
+            <div
+              style="background:#FEF3C7; border:1px solid #FCD34D; border-radius:6px; padding:0.6rem 0.8rem; margin-bottom:0.65rem; font-size:0.77rem; color:#92400E; line-height:1.4;">
+              <strong>ℹ️ ¿Por qué se requiere este paso único?</strong><br>
+              Google Drive exige autorización de tu cuenta para permitir que una aplicación cree carpetas y guarde
+              archivos. No se puede enviar archivos al enlace común de la carpeta
+              (<code>drive.google.com/drive/...</code>). Se hace en <strong>30 segundos</strong> una sola vez:
+            </div>
+
+            <div
+              style="display:flex; flex-direction:column; gap:0.45rem; margin-bottom:0.75rem; font-size:0.76rem; color:#334155; line-height:1.4;">
+              <div><strong>1.</strong> Script Oficial Google Apps Script (integrado permanentemente):
+                <button type="button" id="btnCopyGasCode" class="btn btn-secondary btn-sm"
+                  style="padding:2px 8px; font-size:0.72rem; margin-left:4px;">
+                  📋 Copiar Código Listo
+                </button>
+              </div>
+              <div><strong>2.</strong> Abre <a href="https://script.google.com/" target="_blank"
+                  rel="noopener noreferrer" style="color:var(--ua-primary); font-weight:700;">script.google.com ↗</a>
+                con tu cuenta Google, crea un <em>Nuevo Proyecto</em> y pega el código.</div>
+              <div><strong>3.</strong> Haz clic en <strong>Implementar > Nueva implementación > Tipo: Aplicación
+                  web</strong>, en acceso selecciona <strong>Cualquier usuario</strong> y pega la URL resultante abajo:
+              </div>
+            </div>
+
+            <!-- Visor del código para que nunca se pierda de vista -->
+            <details style="margin-bottom:0.75rem; background:#F8FAFC; border:1px solid #E2E8F0; border-radius:6px; padding:0.4rem 0.6rem;">
+              <summary style="font-size:0.73rem; font-weight:700; color:#334155; cursor:pointer; display:flex; align-items:center; gap:0.35rem;">
+                <span>📜 Ver / Inspeccionar Código Completo de Google Apps Script</span>
+              </summary>
+              <div style="margin-top:0.4rem;">
+                <textarea id="gasCodeTextArea" readonly style="width:100%; height:140px; font-family:Consolas, monospace; font-size:0.7rem; background:#0F172A; color:#38BDF8; border-radius:4px; padding:6px; resize:vertical; border:none;"></textarea>
+                <button type="button" id="btnCopyGasCodeAlt" class="btn btn-secondary btn-sm" style="margin-top:4px; font-size:0.7rem; padding:2px 8px;">
+                  📋 Copiar Todo el Código
+                </button>
+              </div>
+            </details>
+
+            <div style="display: flex; gap: 0.4rem;">
+              <input type="url" id="inputWebhookUrl" class="form-control"
+                value="https://script.google.com/macros/s/AKfycbwPOJdX-P5aE6lHr8avK9EgVnQLFgciuNDjnXygor2giUmVya6MPgvJL-Uee6fafVj6ug/exec"
+                placeholder="https://script.google.com/macros/s/.../exec" style="font-size:0.78rem;">
+              <button type="button" id="btnSaveWebhookUrl" class="btn btn-primary btn-sm"
+                style="white-space:nowrap;">Guardar URL</button>
+            </div>
+            <div style="margin-top:0.45rem; font-size:0.72rem; color:#166534; display:flex; align-items:center; gap:0.3rem;">
+              <span>🔒 <strong>Protegido:</strong> Tu script y webhook quedan guardados permanentemente y no se borran salvo que tú los limpies manualmente.</span>
+            </div>
+            <div style="margin-top:0.25rem; font-size:0.72rem; color:#64748B;">
+              Carpeta Raíz Drive vinculada: <code
+                style="background:#F1F5F9; padding:2px 5px; border-radius:3px; font-weight:600;">1XzJVp9KewZiSoFCVgLCK-vd28bLnMr1P</code>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="modal-footer" style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
+        <button type="button" id="btnDriveDirectLink" class="btn btn-secondary btn-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+            <polyline points="15 3 21 3 21 9"></polyline>
+            <line x1="10" y1="14" x2="21" y2="3"></line>
+          </svg>
+          <span>Abrir Carpeta en Drive ↗</span>
+        </button>
+
+        <div>
+          <button type="button" id="btnExecuteSmartDriveSave" class="btn btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 15V9L12 3 2 9v6l10 6 10-6z"></path>
+              <path d="M6 12l6 4 6-4"></path>
+              <line x1="12" y1="3" x2="12" y2="17"></line>
+            </svg>
+            <span>Guardar en Drive</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: ENVIAR POR CORREO ELECTRÓNICO
+       ============================================================ -->
+  <div id="emailModal" class="modal-overlay">
+    <div class="modal-card modal-email-card">
+      <div class="modal-header">
+        <div style="display: flex; align-items: center; gap: 0.6rem;">
+          <div class="email-icon-badge">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+          </div>
+          <div>
+            <h3 style="margin:0; font-size:1.1rem; color:var(--ua-dark);">Enviar Acta por Correo</h3>
+            <p style="margin:0; font-size:0.75rem; color:var(--ua-gray-text);">Envío a Colaborador o Respaldo
+              Institucional</p>
+          </div>
+        </div>
+        <button type="button" id="btnEmailModalClose" class="modal-close-btn" title="Cerrar">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-group">
+          <div style="margin-bottom: 0.35rem;">
+            <label for="emailTo" style="margin: 0; font-weight: 700;">Destinatario (Para:)</label>
+          </div>
+          <input type="email" id="emailTo" class="form-control" placeholder="colaborador@autonoma.pe">
+        </div>
+
+        <div class="form-group">
+          <label for="emailSubject">Asunto del Correo</label>
+          <input type="text" id="emailSubject" class="form-control">
+        </div>
+
+        <div class="form-group">
+          <div style="margin-bottom:0.35rem;">
+            <label for="emailMessageContainer" style="margin:0; font-weight:700;">Mensaje Institucional</label>
+          </div>
+          <div id="emailMessageContainer" style="background:#FFFFFF; border:1.5px solid #CBD5E1; border-radius:8px; padding:14px 16px; min-height:180px; max-height:280px; overflow-y:auto; overflow-x:auto; font-family:Arial,sans-serif; font-size:13px; color:#1E293B; line-height:1.55; box-shadow:inset 0 1px 2px rgba(0,0,0,0.03);">
+          </div>
+          <textarea id="emailBody" style="display:none;"></textarea>
+        </div>
+
+        <!-- Archivo PDF Adjunto Automático -->
+        <div class="email-attachment-box">
+          <div class="attachment-left">
+            <div class="pdf-icon-badge">PDF</div>
+            <div class="attachment-meta">
+              <strong id="emailAttachmentFilename">Acta_Oficial.pdf</strong>
+              <span class="attachment-status-text">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                PDF generado automáticamente con firmas y formato A4
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Indicador de Progreso al Enviar Correo -->
+        <div id="emailSendProgress" class="drive-progress-box" style="display: none; margin-top: 0.75rem;">
+          <div class="spinner-saving"></div>
+          <div class="progress-text-wrap">
+            <strong id="emailProgressTitle">Generando documento PDF y preparando envío...</strong>
+            <p id="emailProgressSub">Adjuntando archivo oficial...</p>
+          </div>
+        </div>
+
+        <!-- Mensaje de Resultado de Envío -->
+        <div id="emailSendResult" class="drive-result-box" style="display: none; margin-top: 0.75rem;">
+          <div class="result-icon-wrap">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#16A34A" stroke-width="2.5">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+          <div class="result-text-wrap" style="flex:1;">
+            <strong id="emailResultTitle">¡Envío completado con éxito!</strong>
+            <p id="emailResultDesc">El correo fue enviado con el documento oficial adjunto.</p>
+          </div>
+        </div>
+
+        <!-- Banner Informativo de Conexión Automática Google Workspace -->
+        <div id="emailWebhookBanner" class="email-tip-banner"
+          style="display:none; background:#EFF6FF; border-color:#BFDBFE; color:#1E40AF; margin-top:0.6rem;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563EB" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          <div style="font-size:0.77rem; line-height:1.4;">
+            <strong>Envío Directo:</strong> Para enviar 100% automático sin abrir Gmail/Outlook, conecta tu <a href="#"
+              id="linkOpenDriveWebhookFromEmail"
+              style="color:#1D4ED8; font-weight:700; text-decoration:underline;">Webhook de Google Apps Script (1 min)
+              ↗</a>. O usa los botones <strong>Gmail</strong> u <strong>Outlook</strong> abajo.
+          </div>
+        </div>
+
+        <div class="email-tip-banner" style="background:#FFF7ED; border:1px solid #FDBA74; color:#9A3412;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#EA580C" stroke-width="2">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+          <div style="font-size:0.78rem; line-height:1.45;">
+            <strong>Envío Directo:</strong> Haz clic en el botón naranja <strong>"Enviar Correo"</strong> para enviar el documento y la tabla oficial directamente a la bandeja de entrada con el PDF adjunto.
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer" style="display:flex; justify-content:space-between; flex-wrap:wrap; gap:0.5rem;">
+        <button type="button" id="btnEmailCopyText" class="btn btn-secondary btn-sm" title="Copia el mensaje y la tabla en formato visual para pegar en cualquier correo">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+          <span id="copyBtnLabel">Copiar Mensaje</span>
+        </button>
+
+        <div style="display:flex; gap:0.4rem; flex-wrap:wrap; align-items:center;">
+          <button type="button" id="btnSendOutlook" class="btn btn-secondary btn-sm"
+            title="Descarga el PDF, copia la tabla y abre Outlook">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            <span>Outlook</span>
+          </button>
+
+          <button type="button" id="btnSendGmail" class="btn btn-secondary btn-sm"
+            title="Descarga el PDF, copia la tabla y abre Gmail">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <path
+                d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.272H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" />
+            </svg>
+            <span>Gmail</span>
+          </button>
+
+          <button type="button" id="btnSendDirectEmail" class="btn btn-primary btn-sm"
+            style="background:#FF6600; border-color:#EA580C; color:#FFFFFF; font-weight:700; box-shadow:0 2px 5px rgba(255,102,0,0.3);"
+            title="Enviar correo institucional con tabla oficial y PDF adjunto">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+            <span>Enviar Correo</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: HISTORIAL DE ACTAS EN TIEMPO REAL
+       ============================================================ -->
+  <div id="historyModal" class="modal-overlay">
+    <div class="modal-card modal-drive-card" style="max-width: 720px; max-height: 90vh; display: flex; flex-direction: column;">
+      <div class="modal-header" style="background: linear-gradient(135deg, #FFF7ED 0%, #FFFFFF 100%);">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <div style="background: #FFEDD5; color: #EA580C; width: 38px; height: 38px; border-radius: 10px; display: flex; align-items: center; justify-content: center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+          </div>
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+              <h3 style="margin: 0; font-size: 1.1rem; color: var(--ua-dark);">Historial de Actas</h3>
+              <span id="cloudDbLiveBadge" style="display:inline-flex; align-items:center; gap:4px; background:#ECFDF5; color:#065F46; border:1px solid #A7F3D0; font-size:0.7rem; padding:2px 8px; border-radius:12px; font-weight:700;">
+                <span style="width:7px; height:7px; border-radius:50%; background:#10B981; box-shadow:0 0 6px #10B981; display:inline-block;"></span>
+                <span id="cloudDbLiveText">Nube en Tiempo Real</span>
+              </span>
+            </div>
+            <p style="margin: 0; font-size: 0.75rem; color: var(--ua-gray-text);">Sincronización instantánea entre Web y App Móvil</p>
+          </div>
+        </div>
+        <button type="button" id="btnHistoryModalClose" class="modal-close-btn" title="Cerrar">&times;</button>
+      </div>
+
+      <div class="modal-body" style="padding: 1rem 1.25rem; overflow-y: auto; flex: 1;">
+        <!-- Barra de Búsqueda y Filtros -->
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.85rem; flex-wrap: wrap;">
+          <input type="text" id="historySearchInput" class="form-control" placeholder="🔍 Buscar por colaborador, DNI o código de equipo..." style="flex: 1; min-width: 200px;">
+          <button type="button" id="btnRefreshHistory" class="btn btn-secondary btn-sm" title="Refrescar lista en tiempo real">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
+            <span>Actualizar</span>
+          </button>
+        </div>
+
+        <!-- Contador y Estado -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; font-size: 0.8rem; color: #64748B;">
+          <span id="historyStats">Cargando registros...</span>
+          <div style="display: flex; gap: 0.3rem;">
+            <button type="button" class="btn btn-outline-secondary btn-sm history-filter-btn active" data-filter="all">Todas</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm history-filter-btn" data-filter="compromiso">Compromiso</button>
+            <button type="button" class="btn btn-outline-secondary btn-sm history-filter-btn" data-filter="entrega">Devolución</button>
+          </div>
+        </div>
+
+        <!-- Lista Dinámica de Actas -->
+        <div id="historyCardsList" style="display: flex; flex-direction: column; gap: 0.65rem;">
+          <!-- Se llena dinámicamente con JavaScript -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL: ACCESO WEB MUNDIAL & INSTALACIÓN (PWA / APK)
+       ============================================================ -->
+  <div id="installPwaModal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 480px; text-align: center; padding: 1.5rem; max-height: 90vh; overflow-y: auto;">
+      <div style="display: flex; justify-content: flex-end;">
+        <button type="button" id="btnInstallModalClose" class="modal-close-btn" title="Cerrar">&times;</button>
+      </div>
+
+      <img src="brand/pwa-icon-192.png" alt="Icono Oficial UA" style="width: 76px; height: 76px; border-radius: 16px; box-shadow: 0 10px 25px rgba(234, 88, 12, 0.25); margin: 0 auto 0.75rem auto; display: block;">
+
+      <h3 style="margin: 0 0 0.25rem 0; font-size: 1.25rem; color: var(--ua-dark); font-family: var(--font-brand); font-weight: 800;">Actas Autónoma</h3>
+      <p style="margin: 0 0 1rem 0; font-size: 0.82rem; color: var(--ua-gray-text);">Universidad Autónoma del Perú — App Android Oficial</p>
+
+      <!-- Tarjeta Descarga Directa del APK -->
+      <div style="background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: var(--radius-md); padding: 1rem; text-align: left; margin-bottom: 0.9rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+          <span style="font-weight: 700; font-size: 0.85rem; color: #065F46; display: flex; align-items: center; gap: 0.4rem;">
+            <span style="width: 8px; height: 8px; border-radius: 50%; background: #10B981; display: inline-block; box-shadow: 0 0 8px #10B981;"></span>
+            Descargar App Nativa en Celular (APK):
+          </span>
+          <span style="font-size: 0.72rem; background: #D1FAE5; color: #047857; padding: 2px 8px; border-radius: 12px; font-weight: 600;">Android APK</span>
+        </div>
+
+        <div style="display: flex; gap: 0.4rem; margin-bottom: 0.75rem;">
+          <input type="text" id="publicWebUrlDisplay" readonly value="https://spoo.me/descargaactas" style="flex: 1; font-size: 0.95rem; font-weight: 700; font-family: monospace; padding: 0.5rem 0.6rem; border: 1.5px solid #10B981; border-radius: var(--radius-sm); background: #FFFFFF; color: #064E3B; text-align: center;">
+          <button type="button" id="btnCopyPublicUrl" class="btn btn-secondary btn-sm" style="background: #047857; color: #FFFFFF; border-color: #047857; font-size: 0.8rem; font-weight: 700;">Copiar</button>
+        </div>
+
+        <!-- Código QR para descargar APK con el celular -->
+        <div style="text-align: center; background: #FFFFFF; border-radius: var(--radius-sm); padding: 0.85rem; border: 1px dashed #A7F3D0;">
+          <a href="https://files.catbox.moe/pobd45.apk" target="_blank" download="APPTAS.apk" style="display: inline-block; text-decoration: none;">
+            <img id="publicWebQrCode" src="https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=6&data=https%3A%2F%2Fspoo.me%2Fdescargaactas" alt="Código QR para descargar APPTAS" style="width: 155px; height: 155px; border-radius: 8px; display: block; margin: 0 auto 0.5rem auto;">
+          </a>
+          <p style="margin: 0; font-size: 0.78rem; color: #047857; font-weight: 700;">📲 Escanea con tu celular o pulsa para descargar</p>
+        </div>
+      </div>
+
+      <!-- Tarjeta Acceso Web Móvil Directo -->
+      <div style="background: #F0F9FF; border: 1px solid #BAE6FD; border-radius: var(--radius-md); padding: 0.85rem 1rem; text-align: left; margin-bottom: 1.1rem;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.4rem;">
+          <span style="font-weight: 700; font-size: 0.82rem; color: #0369A1;">🌐 O ingresa desde el navegador del celular (Sin caducidad):</span>
+        </div>
+        <div style="display: flex; gap: 0.4rem;">
+          <input type="text" id="publicWebDirectInput" readonly value="https://spoo.me/actas26" style="flex: 1; font-size: 0.95rem; font-weight: 700; font-family: monospace; padding: 0.45rem 0.6rem; border: 1.5px solid #0284C7; border-radius: var(--radius-sm); background: #FFFFFF; color: #0369A1; text-align: center;">
+          <button type="button" id="btnCopyDirectWebUrl" class="btn btn-secondary btn-sm" style="background: #0284C7; color: #FFFFFF; border-color: #0284C7; font-size: 0.78rem; font-weight: 700;">Copiar</button>
+        </div>
+      </div>
+
+      <!-- ÚNICO BOTÓN NARANJA PARA DESCARGAR EL APK NATIVO INDEPENDIENTE -->
+      <a href="https://files.catbox.moe/pobd45.apk" id="btnDownloadApkModal" target="_blank" download="APPTAS.apk" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 0.85rem; font-size: 1.05rem; font-weight: 800; text-decoration: none; box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35); border-radius: var(--radius-sm); letter-spacing: 0.02em;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        <span>Descargar APPTAS</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL DE DIÁLOGO OFICIAL: ACTAS AUTÓNOMA
+       ============================================================ -->
+  <div id="customAlertModal" class="modal-overlay">
+    <div class="modal-card" style="max-width: 400px; text-align: center; padding: 1.5rem; border-top: 4px solid var(--ua-primary); border-radius: 16px; margin: auto; box-shadow: 0 20px 45px rgba(0,0,0,0.3);">
+      <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; margin-bottom: 1rem;">
+        <img src="brand/pwa-icon-192.png" alt="UA" style="width: 42px; height: 42px; border-radius: 10px; box-shadow: 0 4px 10px rgba(234, 88, 12, 0.25);">
+        <div style="text-align: left;">
+          <h3 id="customAlertTitle" style="margin: 0; font-size: 1.18rem; color: #0F172A; font-family: var(--font-brand); font-weight: 800; letter-spacing: -0.02em;">Actas Autónoma</h3>
+          <p style="margin: 0; font-size: 0.75rem; color: var(--ua-gray-text); font-weight: 500;">Universidad Autónoma del Perú</p>
+        </div>
+      </div>
+      <div id="customAlertMessage" style="font-size: 0.9rem; color: #334155; line-height: 1.55; margin-bottom: 1.25rem; white-space: pre-line; text-align: left; background: #F8FAFC; padding: 0.9rem 1rem; border-radius: var(--radius-sm); border: 1px solid #E2E8F0; max-height: 60vh; overflow-y: auto;"></div>
+      <div style="display: flex; gap: 0.6rem; justify-content: flex-end;">
+        <button type="button" id="btnCustomAlertCancel" class="btn btn-secondary" style="display: none; flex: 1; justify-content: center; padding: 0.75rem; font-size: 0.92rem; font-weight: 600;">Cancelar</button>
+        <button type="button" id="btnCustomAlertOk" class="btn btn-primary" style="flex: 1; justify-content: center; padding: 0.75rem; font-size: 0.92rem; font-weight: 700;">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       BARRA INFERIOR DE ACCIONES (GOOGLE DRIVE, CORREO, HISTORIAL)
+       ============================================================ -->
+  <footer class="app-bottom-bar">
+    <div class="bottom-bar-container">
+      <button type="button" id="btnGoogleDrive" class="bottom-action-btn" title="Guardar en Drive ">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 15V9L12 3 2 9v6l10 6 10-6z"></path>
+          <path d="M6 12l6 4 6-4"></path>
+          <line x1="12" y1="3" x2="12" y2="17"></line>
+        </svg>
+        <span>Guardar en Drive </span>
+      </button>
+
+      <button type="button" id="btnOpenEmailModal" class="bottom-action-btn btn-action-orange" title="Enviar por Correo">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+          <polyline points="22,6 12,13 2,6"></polyline>
+        </svg>
+        <span>Enviar Correo</span>
+      </button>
+
+      <button type="button" id="btnOpenHistoryModal" class="bottom-action-btn" title="Historial de Actas">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span>Historial</span>
+      </button>
+    </div>
+  </footer>
+
+  <!-- Notificaciones Toast -->
+  <div id="toastNotification" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="js/html2pdf.bundle.min.js"></script>
+  <script src="js/signature.js"></script>
+  <script src="js/app.js?v=19"></script>
+
+</body>
+
+</html>

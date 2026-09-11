@@ -1,0 +1,163 @@
+/* ============================================================
+   UNIVERSIDAD AUTÓNOMA — TIPOGRAFÍA
+   Manual de Marca 2026
+   ============================================================
+   FUENTES REQUERIDAS:
+   1. Rebond Grotesque — fuente PRINCIPAL (licencia comercial)
+      Colocar archivos en: brand/fonts/rebond-grotesque/
+      Pesos: Regular (400), SemiBold (600), Bold (700)
+   2. Bricolage Grotesque — fuente WEB auxiliar (Google Fonts, gratuita)
+      Usar solo en apps, web e intranet. NO para impreso ni redes.
+   3. Verdana — fuente SISTEMA (solo PowerPoint)
+      NUNCA para digital, web ni impreso.
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,700&display=swap');
+
+/* ----------------------------------------------------------
+   @font-face — Rebond Grotesque
+   Ajusta las rutas si la carpeta de fuentes está en otro lugar.
+   Descargar desde el proveedor autorizado de marca.
+---------------------------------------------------------- */
+@font-face {
+  font-family: 'Rebond Grotesque';
+  src: url('../fonts/rebond-grotesque/RebondGrotesque-Regular.woff2') format('woff2'),
+       url('../fonts/rebond-grotesque/RebondGrotesque-Regular.woff')  format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Rebond Grotesque';
+  src: url('../fonts/rebond-grotesque/RebondGrotesque-SemiBold.woff2') format('woff2'),
+       url('../fonts/rebond-grotesque/RebondGrotesque-SemiBold.woff')  format('woff');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Rebond Grotesque';
+  src: url('../fonts/rebond-grotesque/RebondGrotesque-Bold.woff2') format('woff2'),
+       url('../fonts/rebond-grotesque/RebondGrotesque-Bold.woff')  format('woff');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* ----------------------------------------------------------
+   RESET BASE
+---------------------------------------------------------- */
+body {
+  font-family: var(--ua-font-web);
+  font-weight: var(--ua-font-regular);
+  font-size: var(--ua-text-body);
+  line-height: var(--ua-leading-normal);
+  color: var(--ua-negro);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ----------------------------------------------------------
+   JERARQUÍA TIPOGRÁFICA
+   Semibold → Titulares hero y display
+   Bold     → Subtítulos, CTAs, destacados, links
+   Regular  → Cuerpo de texto corrido
+---------------------------------------------------------- */
+
+.ua-hero {
+  font-family: var(--ua-font-principal);
+  font-size: var(--ua-text-hero);
+  font-weight: var(--ua-font-semibold);
+  line-height: var(--ua-leading-tight);
+  letter-spacing: -0.02em;
+}
+
+.ua-display {
+  font-family: var(--ua-font-principal);
+  font-size: var(--ua-text-display);
+  font-weight: var(--ua-font-semibold);
+  line-height: var(--ua-leading-tight);
+  letter-spacing: -0.01em;
+}
+
+h1, .ua-h1 {
+  font-family: var(--ua-font-principal);
+  font-size: var(--ua-text-h1);
+  font-weight: var(--ua-font-semibold);
+  line-height: var(--ua-leading-snug);
+}
+
+h2, .ua-h2 {
+  font-family: var(--ua-font-principal);
+  font-size: var(--ua-text-h2);
+  font-weight: var(--ua-font-bold);
+  line-height: var(--ua-leading-snug);
+}
+
+h3, .ua-h3 {
+  font-family: var(--ua-font-web);
+  font-size: var(--ua-text-h3);
+  font-weight: var(--ua-font-bold);
+  line-height: var(--ua-leading-snug);
+}
+
+h4, .ua-h4 {
+  font-family: var(--ua-font-web);
+  font-size: var(--ua-text-h4);
+  font-weight: var(--ua-font-bold);
+  line-height: var(--ua-leading-normal);
+}
+
+p, .ua-body {
+  font-family: var(--ua-font-web);
+  font-size: var(--ua-text-body);
+  font-weight: var(--ua-font-regular);
+  line-height: var(--ua-leading-relaxed);
+}
+
+.ua-body-lg {
+  font-family: var(--ua-font-web);
+  font-size: var(--ua-text-body-lg);
+  font-weight: var(--ua-font-regular);
+  line-height: var(--ua-leading-relaxed);
+}
+
+small, .ua-caption {
+  font-family: var(--ua-font-web);
+  font-size: var(--ua-text-caption);
+  font-weight: var(--ua-font-regular);
+  line-height: var(--ua-leading-normal);
+}
+
+/* Link/CTA inline — Bold según manual */
+a, .ua-link {
+  font-weight: var(--ua-font-bold);
+  color: var(--ua-naranja);
+  text-decoration: none;
+}
+
+a:hover, .ua-link:hover {
+  text-decoration: underline;
+}
+
+/* ----------------------------------------------------------
+   UTILIDADES DE COLOR TIPOGRÁFICO
+---------------------------------------------------------- */
+.ua-text-naranja       { color: var(--ua-naranja); }
+.ua-text-blanco        { color: var(--ua-blanco); }
+.ua-text-negro         { color: var(--ua-negro); }
+.ua-text-camel         { color: var(--ua-camel); }
+.ua-text-morado-claro  { color: var(--ua-morado-claro); }
+.ua-text-morado        { color: var(--ua-morado-intenso); }
+.ua-text-amarillo      { color: var(--ua-amarillo); }
+.ua-text-celeste       { color: var(--ua-celeste); }
+.ua-text-verde         { color: var(--ua-verde-claro); }
+
+/* ----------------------------------------------------------
+   UTILIDADES DE PESO
+---------------------------------------------------------- */
+.ua-regular  { font-weight: var(--ua-font-regular); }
+.ua-semibold { font-weight: var(--ua-font-semibold); }
+.ua-bold     { font-weight: var(--ua-font-bold); }

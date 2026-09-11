@@ -1,0 +1,4 @@
+node_modules/
+scripts/android_build/
+.vercel/
+.netlify/

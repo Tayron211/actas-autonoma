@@ -1,0 +1,274 @@
+/* ============================================================
+   UNIVERSIDAD AUTÓNOMA — TABLAS DE DATOS
+   Basado en Manual de Marca 2026
+   Tokens: variables.css
+   ============================================================
+   Criterios aplicados del manual:
+   - Encabezados: naranja con texto Bold (como CTAs y labels)
+   - Filas alternas: tonos muy suaves de los colores secundarios
+   - Borde de acento: naranja institucional
+   - La caja-tabla de marca (ua-card-table) es para piezas
+     publicitarias. Esta tabla es para datos del sistema.
+   ============================================================ */
+
+/* ----------------------------------------------------------
+   WRAPPER — scroll horizontal en móvil
+---------------------------------------------------------- */
+.ua-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  border-radius: var(--ua-radius-xl);
+  border: 1.5px solid #E5E7EB;
+}
+
+/* ----------------------------------------------------------
+   TABLA BASE
+---------------------------------------------------------- */
+.ua-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--ua-font-web);
+  font-size: var(--ua-text-body-sm);
+  background-color: var(--ua-blanco);
+  border-radius: var(--ua-radius-xl);
+  overflow: hidden;
+}
+
+/* ----------------------------------------------------------
+   ENCABEZADO — naranja institucional
+   Texto Bold según jerarquía del manual
+---------------------------------------------------------- */
+.ua-table thead tr {
+  background-color: var(--ua-naranja);
+  color: var(--ua-blanco);
+}
+
+.ua-table thead th {
+  padding: var(--ua-space-4) var(--ua-space-5);
+  font-weight: var(--ua-font-bold);
+  text-align: left;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+}
+
+.ua-table thead th:first-child { border-radius: var(--ua-radius-xl) 0 0 0; }
+.ua-table thead th:last-child  { border-radius: 0 var(--ua-radius-xl) 0 0; }
+
+/* Columna ordenable */
+.ua-table th[data-sortable] {
+  cursor: pointer;
+  user-select: none;
+}
+
+.ua-table th[data-sortable]:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* ----------------------------------------------------------
+   FILAS DE CUERPO
+---------------------------------------------------------- */
+.ua-table tbody tr {
+  border-bottom: 1px solid #F3F4F6;
+  transition: background-color 0.1s ease;
+}
+
+.ua-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.ua-table tbody td {
+  padding: var(--ua-space-4) var(--ua-space-5);
+  color: var(--ua-negro);
+  font-weight: var(--ua-font-regular);
+  vertical-align: middle;
+}
+
+/* Hover sobre fila */
+.ua-table tbody tr:hover {
+  background-color: #FFF0E6;
+}
+
+/* Fila activa / seleccionada */
+.ua-table tbody tr.ua-table-row--selected {
+  background-color: #FFF0E6;
+  border-left: 3px solid var(--ua-naranja);
+}
+
+/* ----------------------------------------------------------
+   VARIANTE — FILAS ALTERNAS (zebra)
+   Tono muy suave del amarillo de Pregrado
+---------------------------------------------------------- */
+.ua-table--striped tbody tr:nth-child(even) {
+  background-color: #FFFBEA;
+}
+
+.ua-table--striped tbody tr:nth-child(even):hover {
+  background-color: #FFF0E6;
+}
+
+/* ----------------------------------------------------------
+   VARIANTE — BORDES VISIBLES
+---------------------------------------------------------- */
+.ua-table--bordered td,
+.ua-table--bordered th {
+  border: 1px solid #E5E7EB;
+}
+
+/* ----------------------------------------------------------
+   VARIANTE — COMPACTA
+---------------------------------------------------------- */
+.ua-table--compact thead th,
+.ua-table--compact tbody td {
+  padding: var(--ua-space-2) var(--ua-space-4);
+  font-size: var(--ua-text-caption);
+}
+
+/* ----------------------------------------------------------
+   FOOTER DE TABLA (totales, resumen)
+---------------------------------------------------------- */
+.ua-table tfoot tr {
+  background-color: #F9FAFB;
+  border-top: 2px solid var(--ua-naranja);
+}
+
+.ua-table tfoot td {
+  padding: var(--ua-space-4) var(--ua-space-5);
+  font-weight: var(--ua-font-bold);
+  color: var(--ua-naranja);
+}
+
+/* ----------------------------------------------------------
+   PAGINACIÓN
+   Botones siguiendo el sistema de botones del manual
+---------------------------------------------------------- */
+.ua-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ua-space-4);
+  padding: var(--ua-space-4) var(--ua-space-2);
+  font-family: var(--ua-font-web);
+  font-size: var(--ua-text-body-sm);
+  flex-wrap: wrap;
+}
+
+.ua-pagination-info {
+  color: #6B7280;
+  font-weight: var(--ua-font-regular);
+}
+
+.ua-pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--ua-space-1);
+}
+
+.ua-pagination-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 var(--ua-space-2);
+  border-radius: var(--ua-radius-md);
+  border: 1.5px solid transparent;
+  font-family: var(--ua-font-web);
+  font-size: var(--ua-text-body-sm);
+  font-weight: var(--ua-font-regular);
+  color: var(--ua-negro);
+  background-color: transparent;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+  text-decoration: none;
+}
+
+.ua-pagination-btn:hover {
+  background-color: #FFF0E6;
+  color: var(--ua-naranja);
+}
+
+/* Página activa — naranja sólido */
+.ua-pagination-btn--active {
+  background-color: var(--ua-naranja);
+  color: var(--ua-blanco);
+  font-weight: var(--ua-font-bold);
+  border-color: var(--ua-naranja);
+}
+
+.ua-pagination-btn--active:hover {
+  background-color: var(--ua-naranja);
+  color: var(--ua-blanco);
+  opacity: 0.88;
+}
+
+.ua-pagination-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* ----------------------------------------------------------
+   ESTADO VACÍO — tabla sin datos
+---------------------------------------------------------- */
+.ua-table-empty {
+  text-align: center;
+  padding: var(--ua-space-12) var(--ua-space-6);
+  color: #9CA3AF;
+}
+
+.ua-table-empty-title {
+  font-size: var(--ua-text-h4);
+  font-weight: var(--ua-font-bold);
+  color: var(--ua-naranja);
+  margin-bottom: var(--ua-space-2);
+}
+
+.ua-table-empty-desc {
+  font-size: var(--ua-text-body-sm);
+  font-weight: var(--ua-font-regular);
+}
+
+/* ----------------------------------------------------------
+   ESTADO CARGA — skeleton
+---------------------------------------------------------- */
+.ua-table-skeleton td {
+  padding: var(--ua-space-4) var(--ua-space-5);
+}
+
+.ua-skeleton-line {
+  height: 0.875rem;
+  border-radius: var(--ua-radius-pill);
+  background: linear-gradient(90deg, #F3F4F6 25%, #E5E7EB 50%, #F3F4F6 75%);
+  background-size: 200% 100%;
+  animation: ua-skeleton-shimmer 1.4s ease infinite;
+}
+
+@keyframes ua-skeleton-shimmer {
+  0%   { background-position: 200% center; }
+  100% { background-position: -200% center; }
+}
+
+/* ----------------------------------------------------------
+   VARIANTE — POSGRADO
+   Encabezado camel / marrón oscuro
+---------------------------------------------------------- */
+.ua-table--posgrado thead tr {
+  background-color: var(--ua-camel);
+  color: var(--ua-negro);
+}
+
+.ua-table--posgrado tfoot tr  { border-top-color: var(--ua-camel); }
+.ua-table--posgrado tfoot td  { color: var(--ua-camel); }
+.ua-table--posgrado tbody tr:hover { background-color: rgba(163,137,97,0.08); }
+
+/* ----------------------------------------------------------
+   VARIANTE — EDUCACIÓN CONTINUA
+   Encabezado morado intenso
+---------------------------------------------------------- */
+.ua-table--ec thead tr {
+  background-color: var(--ua-morado-intenso);
+  color: var(--ua-blanco);
+}
+
+.ua-table--ec tfoot tr  { border-top-color: var(--ua-morado-intenso); }
+.ua-table--ec tfoot td  { color: var(--ua-morado-intenso); }
+.ua-table--ec tbody tr:hover { background-color: rgba(162,126,251,0.08); }

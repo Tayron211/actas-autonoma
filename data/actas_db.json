@@ -1,0 +1,20 @@
+[
+  {
+    "id": "ACTA-SAMPLE-01",
+    "createdAt": "2026-09-10T07:41:40.627Z",
+    "updatedAt": "2026-09-10T07:41:40.627Z",
+    "tipoActa": "entrega",
+    "titulo": "Acta de Devolución de Equipos",
+    "colaborador": "Luz Eileen Emilia Zevallos Avalos",
+    "colabDni": "70167159",
+    "colabEmail": "luz.zevallos@autonoma.pe",
+    "representante": "Bruno Paucar",
+    "repCargo": "Coordinador de DTI",
+    "fecha": "20 de Agosto del 2026",
+    "estadoGeneral": "OPERATIVO Y EN BUEN ESTADO FÍSICO",
+    "equiposCount": 2,
+    "filename": "Acta_Devolucion_Luz_Zevallos.pdf",
+    "driveUrl": "https://drive.google.com/drive/u/0/folders/1XzJVp9KewZiSoFCVgLCK-vd28bLnMr1P",
+    "emailSent": true
+  }
+]

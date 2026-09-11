@@ -1,0 +1,221 @@
+/* ============================================================
+   UNIVERSIDAD AUTÓNOMA — COMPONENTES DE MARCA
+   Manual de Marca 2026
+   ============================================================ */
+
+/* ----------------------------------------------------------
+   FONDOS DE MARCA — clases utilitarias
+---------------------------------------------------------- */
+/* Pregrado */
+.bg-ua-naranja      { background-color: var(--ua-naranja); }
+.bg-ua-amarillo     { background-color: var(--ua-amarillo); }
+.bg-ua-morado-claro { background-color: var(--ua-morado-claro); }
+.bg-ua-celeste      { background-color: var(--ua-celeste); }
+.bg-ua-verde-claro  { background-color: var(--ua-verde-claro); }
+.bg-ua-blanco       { background-color: var(--ua-blanco); }
+
+/* Posgrado */
+.bg-ua-camel        { background-color: var(--ua-camel); }
+.bg-ua-dark         { background-color: var(--ua-marron-oscuro); }
+
+/* Educación Continua */
+.bg-ua-morado       { background-color: var(--ua-morado-intenso); }
+
+/* ----------------------------------------------------------
+   CAJAS DE INFORMACIÓN COMPLEMENTARIA (02.6)
+   Tres variantes: precios/descuentos | tablas | leyendas
+   Pueden pintarse sobre cualquier color permitido de los
+   tres sistemas de marca.
+---------------------------------------------------------- */
+
+/* Base compartida */
+.ua-card {
+  border-radius: var(--ua-radius-xl);
+  padding: var(--ua-space-6);
+  font-family: var(--ua-font-web);
+}
+
+/* Caja de precio / descuento */
+.ua-card-price {
+  border-radius: var(--ua-radius-xl);
+  padding: var(--ua-space-6) var(--ua-space-8);
+  background-color: var(--ua-naranja);
+  color: var(--ua-blanco);
+}
+
+.ua-card-price .ua-card-label {
+  font-size: var(--ua-text-body);
+  font-weight: var(--ua-font-bold);
+  margin-bottom: var(--ua-space-2);
+}
+
+.ua-card-price .ua-card-value {
+  font-size: var(--ua-text-display);
+  font-weight: var(--ua-font-bold);
+  line-height: var(--ua-leading-tight);
+}
+
+/* Caja de descuento porcentual */
+.ua-card-discount {
+  border-radius: var(--ua-radius-xl);
+  padding: var(--ua-space-6);
+  background-color: var(--ua-naranja);
+  color: var(--ua-blanco);
+  text-align: center;
+}
+
+.ua-card-discount .ua-discount-pct {
+  font-size: var(--ua-text-hero);
+  font-weight: var(--ua-font-bold);
+  line-height: 1;
+}
+
+/* Caja de tabla */
+.ua-card-table {
+  border-radius: var(--ua-radius-xl);
+  overflow: hidden;
+  background-color: var(--ua-marron-oscuro);
+  color: var(--ua-blanco);
+}
+
+.ua-card-table table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--ua-text-body-sm);
+}
+
+.ua-card-table thead th {
+  padding: var(--ua-space-3) var(--ua-space-4);
+  text-align: left;
+  color: var(--ua-naranja);
+  font-weight: var(--ua-font-bold);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.ua-card-table tbody td {
+  padding: var(--ua-space-3) var(--ua-space-4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Caja de leyenda / lista */
+.ua-card-legend {
+  border-radius: var(--ua-radius-xl);
+  padding: var(--ua-space-6);
+  background-color: var(--ua-amarillo);
+}
+
+.ua-card-legend .ua-legend-title {
+  font-size: var(--ua-text-h3);
+  font-weight: var(--ua-font-semibold);
+  color: var(--ua-naranja);
+  margin-bottom: var(--ua-space-4);
+}
+
+.ua-card-legend ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.ua-card-legend li {
+  padding: var(--ua-space-1) 0;
+  font-size: var(--ua-text-body-sm);
+  color: var(--ua-naranja);
+}
+
+.ua-card-legend li::before {
+  content: '›';
+  margin-right: var(--ua-space-2);
+  font-weight: var(--ua-font-bold);
+}
+
+/* ----------------------------------------------------------
+   CONTENEDOR DE SOPORTE (02.5)
+   Basado en la forma del isotipo UA.
+   - Proporciones: 70% ancho / 100% alto
+   - Direcciones permitidas: adelante (→) y arriba (↑)
+   - Proyección: solo horizontal o vertical (puede crecer)
+   - PROHIBIDO: hacia atrás, hacia abajo, en diagonal
+   - El color del contenedor sigue las combinaciones
+     definidas por línea de marca (ver docs/color-combinations.md)
+---------------------------------------------------------- */
+.ua-support {
+  border-radius: var(--ua-radius-2xl);
+  padding: var(--ua-space-8);
+  display: inline-block;
+  background-color: var(--ua-naranja);
+  color: var(--ua-blanco);
+}
+
+/* Variantes de color según línea de marca */
+.ua-support--blanco       { background-color: var(--ua-blanco);        color: var(--ua-naranja); }
+.ua-support--amarillo     { background-color: var(--ua-amarillo);       color: var(--ua-naranja); }
+.ua-support--morado-claro { background-color: var(--ua-morado-claro);  color: var(--ua-naranja); }
+.ua-support--celeste      { background-color: var(--ua-celeste);        color: var(--ua-naranja); }
+.ua-support--verde        { background-color: var(--ua-verde-claro);    color: var(--ua-naranja); }
+.ua-support--camel        { background-color: var(--ua-camel);          color: var(--ua-naranja); }
+.ua-support--dark         { background-color: var(--ua-marron-oscuro);  color: var(--ua-blanco); }
+.ua-support--morado       { background-color: var(--ua-morado-intenso); color: var(--ua-blanco); }
+
+/* ----------------------------------------------------------
+   POSICIONAMIENTO DE LOGOTIPO (03.1)
+   Posición PRINCIPAL: zona inferior del formato.
+   Posición secundaria: zona superior.
+   El logotipo escala en proporción al ancho del formato.
+---------------------------------------------------------- */
+.ua-logo-area {
+  display: flex;
+  align-items: flex-end;
+}
+
+.ua-logo-area img {
+  height: auto;
+  width: auto;
+}
+
+.ua-logo-bottom {
+  position: absolute;
+  bottom: var(--ua-space-6);
+  right: var(--ua-space-6);
+}
+
+.ua-logo-top {
+  position: absolute;
+  top: var(--ua-space-6);
+  right: var(--ua-space-6);
+}
+
+/* ----------------------------------------------------------
+   LAYOUT BASE — contenedores de marca
+   Para layouts con fotografía + contenedor (ver 03.2).
+---------------------------------------------------------- */
+.ua-layout {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--ua-radius-xl);
+}
+
+.ua-layout-photo {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.ua-layout-content {
+  position: relative;
+  z-index: 1;
+  padding: var(--ua-space-8);
+}
+
+/* Layout dividido (foto + bloque de color) */
+.ua-layout-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+@media (max-width: 640px) {
+  .ua-layout-split {
+    grid-template-columns: 1fr;
+  }
+}

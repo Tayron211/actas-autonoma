@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 140" width="500" height="140">
+  <defs>
+    <linearGradient id="orangeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF9D35" />
+      <stop offset="100%" stop-color="#FF7B00" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Isotipo 'A' Universitaria -->
+  <g transform="translate(15, 12)">
+    <!-- Círculo / Arco dinámico -->
+    <path d="M 58 10 C 26 10 0 36 0 68 C 0 88 10 106 26 116 L 38 98 C 28 90 22 78 22 68 C 22 48 38 32 58 32 C 78 32 94 48 94 68 C 94 78 88 90 78 98 L 90 116 C 106 106 116 88 116 68 C 116 36 90 10 58 10 Z" fill="url(#orangeGrad)" />
+    <!-- Letra A central sólida -->
+    <path d="M 58 26 L 32 96 L 48 96 L 53 82 L 63 82 L 68 96 L 84 96 Z M 58 48 L 60 70 L 56 70 Z" fill="#FFFFFF" />
+  </g>
+
+  <!-- Tipografía Oficial AUTÓNOMA -->
+  <text x="145" y="78" font-family="'Montserrat', 'Outfit', 'Arial Black', sans-serif" font-size="52" font-weight="900" fill="#FF8F1C" letter-spacing="2">AUTÓNOMA</text>
+  
+  <!-- Subtítulo Institucional -->
+  <text x="148" y="106" font-family="'Montserrat', 'Outfit', 'Arial', sans-serif" font-size="16" font-weight="700" fill="#382F2D" letter-spacing="4.5">UNIVERSIDAD</text>
+</svg>

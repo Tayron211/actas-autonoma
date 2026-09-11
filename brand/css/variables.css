@@ -1,0 +1,131 @@
+/* ============================================================
+   UNIVERSIDAD AUTÓNOMA — DESIGN TOKENS
+   Manual de Marca 2026
+   ============================================================ */
+
+:root {
+
+  /* ----------------------------------------------------------
+     COLORES — PREGRADO
+     Principal : Naranja Autónoma
+     Secundarios: Amarillo Claro, Morado Claro, Celeste, Verde Claro
+  ---------------------------------------------------------- */
+  --ua-naranja:       #FF6600;   /* Pantone 1585 C | R255 G102 B0   | C0 M68 Y100 K0  */
+  --ua-amarillo:      #FFE357;   /* Pantone 113 C  | R255 G227 B87  | C0 M11 Y70 K0   */
+  --ua-morado-claro:  #CBC7FF;   /* Pantone 2092 C | R203 G199 B255 | C20 M31 Y0 K0   */
+  --ua-celeste:       #92E8FF;   /* Pantone 304 C  | R146 G232 B255 | C36 M0 Y6 K0    */
+  --ua-verde-claro:   #BAF597;   /* Pantone 359 C  | R186 G244 B151 | C35 M0 Y58 K0   */
+
+  /* ----------------------------------------------------------
+     COLORES — POSGRADO
+     Principal : Camel
+     Secundarios: Naranja Autónoma, Marrón Oscuro
+  ---------------------------------------------------------- */
+  --ua-camel:         #A38961;   /* Pantone 465 C  | R163 G137 B97  | C7 M27 Y55 K22  */
+  --ua-marron-oscuro: #1A0901;   /* Pantone 7532 C | R26 G9 B1      | C28 M48 Y71 K72 */
+
+  /* ----------------------------------------------------------
+     COLORES — EDUCACIÓN CONTINUA
+     Principal : Morado Intenso
+     Secundarios: Naranja Autónoma, Marrón Oscuro
+  ---------------------------------------------------------- */
+  --ua-morado-intenso: #A27EFB;  /* Pantone 2577 C | R162 G126 B251 | C46 M62 Y2 K0   */
+
+  /* ----------------------------------------------------------
+     NEUTROS
+  ---------------------------------------------------------- */
+  --ua-blanco: #FFFFFF;
+  --ua-negro:  #000000;
+
+  /* ----------------------------------------------------------
+     TIPOGRAFÍA — FAMILIAS
+     Principal (marca / impreso) : Rebond Grotesque (licencia comercial)
+     Auxiliar web (apps/intranet): Bricolage Grotesque (Google Fonts)
+     Auxiliar sistema (solo PPT) : Verdana — NUNCA para web/digital/impreso
+  ---------------------------------------------------------- */
+  --ua-font-principal: 'Rebond Grotesque', 'Bricolage Grotesque', sans-serif;
+  --ua-font-web:       'Bricolage Grotesque', sans-serif;
+  --ua-font-sistema:   Verdana, Geneva, sans-serif;
+
+  /* ----------------------------------------------------------
+     TIPOGRAFÍA — PESOS
+  ---------------------------------------------------------- */
+  --ua-font-regular:  400;
+  --ua-font-semibold: 600;  /* Titulares hero / display */
+  --ua-font-bold:     700;  /* Subtítulos, CTAs, destacados */
+
+  /* ----------------------------------------------------------
+     TIPOGRAFÍA — ESCALA FLUIDA
+  ---------------------------------------------------------- */
+  --ua-text-hero:    clamp(2.5rem, 8vw, 6rem);
+  --ua-text-display: clamp(1.75rem, 5vw, 3.5rem);
+  --ua-text-h1:      clamp(1.5rem, 3.5vw, 2.5rem);
+  --ua-text-h2:      clamp(1.25rem, 2.5vw, 2rem);
+  --ua-text-h3:      clamp(1.125rem, 2vw, 1.5rem);
+  --ua-text-h4:      1.25rem;
+  --ua-text-body-lg: 1.125rem;
+  --ua-text-body:    1rem;
+  --ua-text-body-sm: 0.875rem;
+  --ua-text-caption: 0.75rem;
+  --ua-text-btn:     1rem;
+  --ua-text-badge:   0.75rem;
+
+  /* ----------------------------------------------------------
+     TIPOGRAFÍA — INTERLINEADO
+  ---------------------------------------------------------- */
+  --ua-leading-tight:   1.1;
+  --ua-leading-snug:    1.25;
+  --ua-leading-normal:  1.5;
+  --ua-leading-relaxed: 1.65;
+
+  /* ----------------------------------------------------------
+     ESPACIADO (escala 4px)
+  ---------------------------------------------------------- */
+  --ua-space-1:   0.25rem;   /*  4px */
+  --ua-space-2:   0.5rem;    /*  8px */
+  --ua-space-3:   0.75rem;   /* 12px */
+  --ua-space-4:   1rem;      /* 16px */
+  --ua-space-5:   1.25rem;   /* 20px */
+  --ua-space-6:   1.5rem;    /* 24px */
+  --ua-space-8:   2rem;      /* 32px */
+  --ua-space-10:  2.5rem;    /* 40px */
+  --ua-space-12:  3rem;      /* 48px */
+  --ua-space-16:  4rem;      /* 64px */
+
+  /* ----------------------------------------------------------
+     BORDES Y RADIOS
+  ---------------------------------------------------------- */
+  --ua-radius-sm:   0.5rem;
+  --ua-radius-md:   0.75rem;
+  --ua-radius-lg:   1rem;
+  --ua-radius-xl:   1.5rem;
+  --ua-radius-2xl:  2rem;
+  --ua-radius-pill: 9999px;
+
+  /* ----------------------------------------------------------
+     BOTONES — SISTEMA BASE
+     Construcción: padding = X en todos lados, Bold, bordes redondeados.
+  ---------------------------------------------------------- */
+  --ua-btn-padding-y:   0.5rem;
+  --ua-btn-padding-x:   1.25rem;
+  --ua-btn-radius:      var(--ua-radius-xl);
+  --ua-btn-font-weight: var(--ua-font-bold);
+  --ua-btn-font-size:   var(--ua-text-btn);
+
+  /* ----------------------------------------------------------
+     LOGOTIPO — TAMAÑOS MÍNIMOS DIGITALES (px)
+  ---------------------------------------------------------- */
+  --ua-logo-ua-min:        27px;   /* Logotipo iniciales UA */
+  --ua-logo-diario-min:    64px;   /* Logotipo uso diario  AUTÓNOMA */
+  --ua-logo-principal-min: 67px;   /* Logotipo principal UNIVERSIDAD AUTÓNOMA */
+  --ua-logo-completo-min:  80px;   /* Logotipo completo UNIVERSIDAD AUTÓNOMA DEL PERÚ */
+  --ua-logo-posgrado-min: 108px;   /* Logotipo Posgrado */
+  --ua-logo-ec-min:       108px;   /* Logotipo Educación Continua */
+
+  /* ----------------------------------------------------------
+     PORCENTAJES DE USO DE COLOR (referencia de diseño)
+     Pregrado  : Naranja 65%, Blanco 15%, Amarillo 5%, Morado 5%, Celeste 5%, Verde 5%
+     Posgrado  : Camel 50%, Marrón Oscuro 30%, Naranja 20%
+     Ed.Cont.  : Morado Intenso 50%, Marrón Oscuro 30%, Blanco 5%, Naranja 15%
+  ---------------------------------------------------------- */
+}

@@ -1,0 +1,339 @@
+/* ============================================================
+   UNIVERSIDAD AUTÓNOMA — NAVEGACIÓN
+   Basado en Manual de Marca 2026
+   Tokens: variables.css | Tipografía: typography.css
+   ============================================================
+   Criterios aplicados del manual:
+   - Logo: posición principal = inferior en piezas de marca.
+     En header web = izquierda (estándar digital).
+   - Color activo/hover: Naranja Autónoma
+   - Tipografía de navegación: Bold para ítems activos,
+     Regular/Semibold para ítems pasivos
+   - Tres sistemas de color para header según línea de marca:
+     Pregrado (naranja) · Posgrado (camel/dark) · E.C. (morado)
+   ============================================================ */
+
+/* ----------------------------------------------------------
+   HEADER / BARRA DE NAVEGACIÓN PRINCIPAL
+---------------------------------------------------------- */
+.ua-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  width: 100%;
+  background-color: var(--ua-blanco);
+  border-bottom: 2px solid var(--ua-naranja);
+}
+
+.ua-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ua-space-6);
+  padding: var(--ua-space-4) var(--ua-space-8);
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* ----------------------------------------------------------
+   LOGO EN HEADER
+   Tamaño mínimo: 67px (logotipo principal según manual)
+---------------------------------------------------------- */
+.ua-header-logo {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  text-decoration: none;
+}
+
+.ua-header-logo img {
+  height: 40px;
+  width: auto;
+  min-width: var(--ua-logo-principal-min);
+}
+
+/* ----------------------------------------------------------
+   NAVEGACIÓN PRINCIPAL
+---------------------------------------------------------- */
+.ua-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--ua-space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.ua-nav-item {
+  position: relative;
+}
+
+.ua-nav-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ua-space-2);
+  padding: var(--ua-space-2) var(--ua-space-4);
+  border-radius: var(--ua-radius-lg);
+  font-family: var(--ua-font-web);
+  font-size: var(--ua-text-body-sm);
+  font-weight: var(--ua-font-semibold);
+  color: var(--ua-negro);
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+  white-space: nowrap;
+}
+
+.ua-nav-link:hover {
+  background-color: #FFF0E6;
+  color: var(--ua-naranja);
+  text-decoration: none;
+}
+
+/* Ítem activo — Bold + naranja según jerarquía tipográfica del manual */
+.ua-nav-link--active,
+.ua-nav-link[aria-current="page"] {
+  background-color: #FFF0E6;
+  color: var(--ua-naranja);
+  font-weight: var(--ua-font-bold);
+}
+
+/* ----------------------------------------------------------
+   DROPDOWN / SUBMENÚ
+---------------------------------------------------------- */
+.ua-dropdown {
+  position: absolute;
+  top: calc(100% + var(--ua-space-2));
+  left: 0;
+  min-width: 200px;
+  background-color: var(--ua-blanco);
+  border: 1.5px solid #E5E7EB;
+  border-radius: var(--ua-radius-xl);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  padding: var(--ua-space-2);
+  list-style: none;
+  margin: 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s;
+  z-index: 100;
+}
+
+.ua-nav-item:hover .ua-dropdown,
+.ua-nav-item:focus-within .ua-dropdown {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.ua-dropdown-link {
+  display: block;
+  padding: var(--ua-space-2) var(--ua-space-4);
+  border-radius: var(--ua-radius-md);
+  font-family: var(--ua-font-web);
+  font-size: var(--ua-text-body-sm);
+  font-weight: var(--ua-font-regular);
+  color: var(--ua-negro);
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.ua-dropdown-link:hover {
+  background-color: #FFF0E6;
+  color: var(--ua-naranja);
+}
+
+/* ----------------------------------------------------------
+   ACCIONES DEL HEADER (botones lado derecho)
+---------------------------------------------------------- */
+.ua-header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--ua-space-3);
+  flex-shrink: 0;
+}
+
+/* ----------------------------------------------------------
+   BREADCRUMB
+   Jerarquía visual con naranja para el ítem activo
+---------------------------------------------------------- */
+.ua-breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--ua-space-2);
+  list-style: none;
+  padding: var(--ua-space-3) 0;
+  margin: 0;
+}
+
+.ua-breadcrumb-item {
+  display: flex;
+  align-items: center;
+  gap: var(--ua-space-2);
+  font-family: var(--ua-font-web);
+  font-size: var(--ua-text-body-sm);
+  font-weight: var(--ua-font-regular);
+  color: #6B7280;
+}
+
+.ua-breadcrumb-item::after {
+  content: '/';
+  color: #D1D5DB;
+  font-weight: var(--ua-font-regular);
+}
+
+.ua-breadcrumb-item:last-child::after { display: none; }
+
+.ua-breadcrumb-link {
+  color: #6B7280;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.ua-breadcrumb-link:hover { color: var(--ua-naranja); }
+
+/* Ítem actual — naranja Bold */
+.ua-breadcrumb-item:last-child {
+  color: var(--ua-naranja);
+  font-weight: var(--ua-font-bold);
+}
+
+/* ----------------------------------------------------------
+   SIDEBAR (menú lateral para apps internas)
+---------------------------------------------------------- */
+.ua-sidebar {
+  display: flex;
+  flex-direction: column;
+  width: 260px;
+  min-height: 100vh;
+  background-color: var(--ua-blanco);
+  border-right: 2px solid #F3F4F6;
+  padding: var(--ua-space-6) var(--ua-space-4);
+  gap: var(--ua-space-2);
+}
+
+.ua-sidebar-logo {
+  padding: 0 var(--ua-space-2) var(--ua-space-6);
+  border-bottom: 1px solid #F3F4F6;
+  margin-bottom: var(--ua-space-4);
+}
+
+.ua-sidebar-logo img {
+  height: 36px;
+  width: auto;
+  min-width: var(--ua-logo-diario-min);
+}
+
+.ua-sidebar-section-title {
+  font-family: var(--ua-font-web);
+  font-size: var(--ua-text-caption);
+  font-weight: var(--ua-font-bold);
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: var(--ua-space-4) var(--ua-space-3) var(--ua-space-2);
+}
+
+.ua-sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: var(--ua-space-3);
+  padding: var(--ua-space-3) var(--ua-space-3);
+  border-radius: var(--ua-radius-lg);
+  font-family: var(--ua-font-web);
+  font-size: var(--ua-text-body-sm);
+  font-weight: var(--ua-font-regular);
+  color: #374151;
+  text-decoration: none;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.ua-sidebar-link:hover {
+  background-color: #FFF0E6;
+  color: var(--ua-naranja);
+}
+
+.ua-sidebar-link--active {
+  background-color: var(--ua-naranja);
+  color: var(--ua-blanco);
+  font-weight: var(--ua-font-bold);
+}
+
+.ua-sidebar-link--active:hover {
+  background-color: var(--ua-naranja);
+  color: var(--ua-blanco);
+  opacity: 0.9;
+}
+
+/* ----------------------------------------------------------
+   HEADER — VARIANTES POR SISTEMA DE MARCA
+   Para páginas especializadas de Posgrado o E.C.
+---------------------------------------------------------- */
+
+/* Pregrado (default: blanco con borde naranja, ya definido arriba) */
+
+/* Posgrado */
+.ua-header--posgrado {
+  background-color: var(--ua-marron-oscuro);
+  border-bottom-color: var(--ua-camel);
+}
+
+.ua-header--posgrado .ua-nav-link            { color: var(--ua-blanco); }
+.ua-header--posgrado .ua-nav-link:hover      { background-color: rgba(163,137,97,0.2); color: var(--ua-camel); }
+.ua-header--posgrado .ua-nav-link--active    { background-color: var(--ua-naranja); color: var(--ua-blanco); }
+
+/* Educación Continua */
+.ua-header--ec {
+  background-color: var(--ua-marron-oscuro);
+  border-bottom-color: var(--ua-morado-intenso);
+}
+
+.ua-header--ec .ua-nav-link            { color: var(--ua-blanco); }
+.ua-header--ec .ua-nav-link:hover      { background-color: rgba(162,126,251,0.2); color: var(--ua-morado-intenso); }
+.ua-header--ec .ua-nav-link--active    { background-color: var(--ua-naranja); color: var(--ua-blanco); }
+
+/* ----------------------------------------------------------
+   RESPONSIVE — MENÚ MÓVIL
+---------------------------------------------------------- */
+.ua-nav-toggle {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: var(--ua-space-2);
+}
+
+.ua-nav-toggle span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background-color: var(--ua-naranja);
+  border-radius: 2px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+@media (max-width: 768px) {
+  .ua-nav-toggle { display: flex; }
+
+  .ua-nav {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    align-items: stretch;
+    background-color: var(--ua-blanco);
+    border-top: 1px solid #F3F4F6;
+    border-bottom: 2px solid var(--ua-naranja);
+    padding: var(--ua-space-4);
+    gap: var(--ua-space-1);
+    display: none;
+  }
+
+  .ua-nav--open { display: flex; }
+
+  .ua-nav-link { padding: var(--ua-space-3) var(--ua-space-4); }
+}

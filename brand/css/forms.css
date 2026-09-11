@@ -1,0 +1,260 @@
+/* ============================================================
+   UNIVERSIDAD AUTÓNOMA — FORMULARIOS
+   Basado en Manual de Marca 2026
+   Tokens: variables.css | Tipografía: typography.css
+   ============================================================
+   Criterios de diseño aplicados del manual:
+   - Bordes redondeados (coherente con los botones)
+   - Naranja Autónoma como color de acento/foco
+   - Tipografía Bold para labels (igual que CTAs)
+   - Tipografía Regular para valores ingresados
+   ============================================================ */
+
+/* ----------------------------------------------------------
+   GRUPO DE CAMPO
+---------------------------------------------------------- */
+.ua-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ua-space-2);
+}
+
+/* ----------------------------------------------------------
+   LABEL
+   Bold según el manual para textos de acción e identificación
+---------------------------------------------------------- */
+.ua-label {
+  font-family: var(--ua-font-web);
+  font-size: var(--ua-text-body-sm);
+  font-weight: var(--ua-font-bold);
+  color: var(--ua-negro);
+  line-height: var(--ua-leading-snug);
+}
+
+.ua-label--required::after {
+  content: ' *';
+  color: var(--ua-naranja);
+}
+
+/* ----------------------------------------------------------
+   INPUTS Y TEXTAREA — base
+   Esquinas redondeadas coherentes con el sistema de botones.
+   El foco usa el naranja institucional.
+---------------------------------------------------------- */
+.ua-input,
+.ua-select,
+.ua-textarea {
+  width: 100%;
+  padding: var(--ua-space-3) var(--ua-space-4);
+  border: 2px solid #D1D5DB;
+  border-radius: var(--ua-radius-lg);
+  background-color: var(--ua-blanco);
+  font-family: var(--ua-font-web);
+  font-size: var(--ua-text-body);
+  font-weight: var(--ua-font-regular);
+  color: var(--ua-negro);
+  line-height: var(--ua-leading-normal);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.ua-input::placeholder,
+.ua-textarea::placeholder {
+  color: #9CA3AF;
+  font-weight: var(--ua-font-regular);
+}
+
+/* Foco — naranja institucional */
+.ua-input:focus,
+.ua-select:focus,
+.ua-textarea:focus {
+  border-color: var(--ua-naranja);
+  box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.15);
+}
+
+/* Hover */
+.ua-input:hover:not(:focus):not(:disabled),
+.ua-select:hover:not(:focus):not(:disabled),
+.ua-textarea:hover:not(:focus):not(:disabled) {
+  border-color: #9CA3AF;
+}
+
+/* Deshabilitado */
+.ua-input:disabled,
+.ua-select:disabled,
+.ua-textarea:disabled {
+  background-color: #F3F4F6;
+  color: #9CA3AF;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Textarea */
+.ua-textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* ----------------------------------------------------------
+   SELECT — flecha personalizada con naranja
+---------------------------------------------------------- */
+.ua-select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23FF6600' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--ua-space-4) center;
+  padding-right: var(--ua-space-10);
+  cursor: pointer;
+}
+
+/* ----------------------------------------------------------
+   ESTADO — VÁLIDO
+   Verde claro del sistema Pregrado
+---------------------------------------------------------- */
+.ua-input--valid,
+.ua-select--valid,
+.ua-textarea--valid {
+  border-color: #22C55E;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2322C55E' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='20 6 9 17 4 12'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--ua-space-4) center;
+  padding-right: var(--ua-space-10);
+}
+
+.ua-input--valid:focus,
+.ua-select--valid:focus,
+.ua-textarea--valid:focus {
+  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
+}
+
+/* ----------------------------------------------------------
+   ESTADO — ERROR
+   Naranja como único color de alerta (coherente con la marca)
+---------------------------------------------------------- */
+.ua-input--error,
+.ua-select--error,
+.ua-textarea--error {
+  border-color: var(--ua-naranja);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23FF6600' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='10'/%3E%3Cline x1='12' y1='8' x2='12' y2='12'/%3E%3Cline x1='12' y1='16' x2='12.01' y2='16'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--ua-space-4) center;
+  padding-right: var(--ua-space-10);
+}
+
+.ua-input--error:focus,
+.ua-select--error:focus,
+.ua-textarea--error:focus {
+  box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.15);
+}
+
+/* ----------------------------------------------------------
+   MENSAJE DE AYUDA / ERROR BAJO EL CAMPO
+---------------------------------------------------------- */
+.ua-field-hint {
+  font-family: var(--ua-font-web);
+  font-size: var(--ua-text-caption);
+  font-weight: var(--ua-font-regular);
+  color: #6B7280;
+  line-height: var(--ua-leading-normal);
+}
+
+.ua-field-error {
+  font-family: var(--ua-font-web);
+  font-size: var(--ua-text-caption);
+  font-weight: var(--ua-font-bold);
+  color: var(--ua-naranja);
+  line-height: var(--ua-leading-normal);
+}
+
+/* ----------------------------------------------------------
+   CHECKBOX Y RADIO — personalizados con naranja
+---------------------------------------------------------- */
+.ua-check,
+.ua-radio {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ua-space-3);
+  cursor: pointer;
+  font-family: var(--ua-font-web);
+  font-size: var(--ua-text-body);
+  font-weight: var(--ua-font-regular);
+  color: var(--ua-negro);
+  user-select: none;
+}
+
+.ua-check input[type="checkbox"],
+.ua-radio  input[type="radio"] {
+  width: 1.125rem;
+  height: 1.125rem;
+  flex-shrink: 0;
+  appearance: none;
+  -webkit-appearance: none;
+  border: 2px solid #D1D5DB;
+  background-color: var(--ua-blanco);
+  cursor: pointer;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+  outline: none;
+}
+
+.ua-check input[type="checkbox"] {
+  border-radius: var(--ua-radius-sm);
+}
+
+.ua-radio input[type="radio"] {
+  border-radius: 50%;
+}
+
+.ua-check input[type="checkbox"]:checked {
+  background-color: var(--ua-naranja);
+  border-color: var(--ua-naranja);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='white'%3E%3Cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
+.ua-radio input[type="radio"]:checked {
+  border-color: var(--ua-naranja);
+  background-image: radial-gradient(circle, var(--ua-naranja) 50%, transparent 50%);
+}
+
+.ua-check input[type="checkbox"]:focus,
+.ua-radio  input[type="radio"]:focus {
+  box-shadow: 0 0 0 3px rgba(255, 102, 0, 0.15);
+  border-color: var(--ua-naranja);
+}
+
+/* ----------------------------------------------------------
+   FORMULARIO — estructura general
+---------------------------------------------------------- */
+.ua-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ua-space-6);
+}
+
+.ua-form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: var(--ua-space-4);
+}
+
+/* ----------------------------------------------------------
+   INPUT SEARCH — barra de búsqueda
+---------------------------------------------------------- */
+.ua-search {
+  position: relative;
+}
+
+.ua-search .ua-input {
+  padding-left: var(--ua-space-10);
+}
+
+.ua-search-icon {
+  position: absolute;
+  left: var(--ua-space-4);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--ua-naranja);
+  pointer-events: none;
+}

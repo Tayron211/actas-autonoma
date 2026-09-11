@@ -1,0 +1,13 @@
+node_modules
+scripts
+data
+actas
+downloads/*.zip
+*.zip
+*.docx
+.system_generated
+config.json
+server.js
+package.json
+package-lock.json
+*.log

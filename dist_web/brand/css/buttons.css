@@ -1,0 +1,110 @@
+/* ============================================================
+   UNIVERSIDAD AUTÓNOMA — BOTONES Y BADGES
+   Manual de Marca 2026
+   ============================================================
+   REGLAS DEL MANUAL:
+   - Tipografía dentro del botón: siempre Bold
+   - Padding = X en todos lados (X = referencia interna del botón)
+   - Bordes muy redondeados
+   - CTAs de Pregrado (Postula, Regístrate, etc.): SOLO para Pregrado.
+     PROHIBIDO usarlos en Posgrado y Educación Continua.
+   - Botones UI/UX: válidos en los tres sistemas de marca.
+   ============================================================ */
+
+/* ----------------------------------------------------------
+   BASE — todos los botones
+---------------------------------------------------------- */
+.ua-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ua-space-2);
+  padding: var(--ua-btn-padding-y) var(--ua-btn-padding-x);
+  border-radius: var(--ua-btn-radius);
+  font-family: var(--ua-font-web);
+  font-size: var(--ua-btn-font-size);
+  font-weight: var(--ua-btn-font-weight);
+  line-height: 1.25;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+  transition: opacity 0.15s ease, transform 0.1s ease;
+  white-space: nowrap;
+}
+
+.ua-btn:hover   { opacity: 0.88; }
+.ua-btn:active  { transform: scale(0.97); }
+
+.ua-btn:disabled,
+.ua-btn[aria-disabled="true"] {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ----------------------------------------------------------
+   VARIANTES CTA — solo Pregrado
+   Usados como Call to Action en comunicación Pregrado.
+   PROHIBIDO en Posgrado y Educación Continua.
+   Labels: Regístrate | Postula | Inscríbete | Reserva | Aplica
+---------------------------------------------------------- */
+.ua-btn-primary   { background-color: var(--ua-naranja);      color: var(--ua-blanco); }
+.ua-btn-secondary { background-color: var(--ua-blanco);       color: var(--ua-naranja); }
+.ua-btn-amarillo  { background-color: var(--ua-amarillo);     color: var(--ua-naranja); }
+.ua-btn-morado    { background-color: var(--ua-morado-claro); color: var(--ua-naranja); }
+.ua-btn-celeste   { background-color: var(--ua-celeste);      color: var(--ua-naranja); }
+.ua-btn-verde     { background-color: var(--ua-verde-claro);  color: var(--ua-naranja); }
+
+/* ----------------------------------------------------------
+   VARIANTES UI/UX — ecosistemas digitales (web y apps)
+   Para los tres sistemas: Pregrado, Posgrado, Ed. Continua.
+   Labels: Ver más | Continuar | Entrar | Descargar | Confirmar
+   Elegir la combinación según el fondo del layout (ver docs/color-combinations.md)
+---------------------------------------------------------- */
+
+/* Naranja — botón principal en todos los sistemas */
+.ua-btn-ui-naranja { background-color: var(--ua-naranja);       color: var(--ua-blanco); }
+
+/* Blanco — sobre fondos naranja (Pregrado) */
+.ua-btn-ui-blanco  { background-color: var(--ua-blanco);        color: var(--ua-naranja); }
+
+/* Marrón oscuro — Posgrado fondo camel o naranja */
+.ua-btn-ui-dark    { background-color: var(--ua-marron-oscuro); color: var(--ua-blanco); }
+
+/* Camel — Posgrado fondo oscuro */
+.ua-btn-ui-camel   { background-color: var(--ua-camel);         color: var(--ua-naranja); }
+
+/* Morado intenso — Educación Continua */
+.ua-btn-ui-morado  { background-color: var(--ua-morado-intenso); color: var(--ua-blanco); }
+
+/* ----------------------------------------------------------
+   BADGES DE MODALIDAD
+   Para etiquetar: Virtual | Semipresencial | Presencial
+   También sirven para indicar estado/contexto en contenidos.
+---------------------------------------------------------- */
+.ua-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.2rem 0.75rem;
+  border-radius: var(--ua-radius-pill);
+  font-family: var(--ua-font-web);
+  font-size: var(--ua-text-badge);
+  font-weight: var(--ua-font-bold);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* Pregrado */
+.ua-badge-naranja      { background-color: var(--ua-naranja);       color: var(--ua-blanco); }
+.ua-badge-blanco       { background-color: var(--ua-blanco);        color: var(--ua-naranja); }
+.ua-badge-amarillo     { background-color: var(--ua-amarillo);      color: var(--ua-naranja); }
+.ua-badge-morado-claro { background-color: var(--ua-morado-claro);  color: var(--ua-naranja); }
+.ua-badge-celeste      { background-color: var(--ua-celeste);       color: var(--ua-naranja); }
+.ua-badge-verde        { background-color: var(--ua-verde-claro);   color: var(--ua-naranja); }
+
+/* Posgrado */
+.ua-badge-camel        { background-color: var(--ua-camel);         color: var(--ua-naranja); }
+.ua-badge-dark         { background-color: var(--ua-marron-oscuro); color: var(--ua-blanco); }
+
+/* Educación Continua */
+.ua-badge-morado       { background-color: var(--ua-morado-intenso); color: var(--ua-blanco); }
