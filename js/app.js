@@ -1142,26 +1142,16 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // 2. Si estamos en navegador de celular donde window.print() es limitado o no soportado
-    if (isPhoneOrMobile()) {
+    // 2. En celular o computadora (Navegadores web) - SOLO abre el diálogo de impresión del sistema
+    setTimeout(() => {
       try {
         window.print();
       } catch (ePrint) {
-        console.warn('window.print en móvil:', ePrint);
+        console.warn('Error al invocar window.print():', ePrint);
+        showToast('Tu navegador no admite impresión directa.', 'info', 3500);
       }
-      // Respaldo para celulares: abre/descarga el PDF oficial con firmas para imprimir con 1 toque
-      showToast('📄 Preparando documento para imprimir desde tu celular...', 'info', 3000);
-      generateDocumentPdf({ download: true });
-      setTimeout(cleanUpAfterPrint, 2500);
-      return;
-    }
-
-    // 3. En computadora (PC / Laptop)
-    setTimeout(() => {
-      window.print();
-      // Respaldo de seguridad para navegadores donde afterprint es demorado
       setTimeout(cleanUpAfterPrint, 3000);
-    }, 120);
+    }, 150);
   }
 
   // Optimizaciones táctiles y móviles
@@ -2117,6 +2107,8 @@ www.autonoma.pe`;
 
   // Generar PDF oficial del documento A4 con html2pdf (aislado, sin alterar la hoja visible y sin salto de pantalla)
   async function generateDocumentPdf({ download = false, filename = null } = {}) {
+    updatePreview();
+
     const meta = getCurrentDocMetadata();
     const pdfFilename = filename || meta.filename.replace(/\.html$/i, '.pdf');
 
@@ -2142,8 +2134,8 @@ www.autonoma.pe`;
     const printContainer = document.createElement('div');
     printContainer.id = 'pdfIsolatedContainer';
     printContainer.style.position = 'fixed';
-    printContainer.style.top = '-99999px';
-    printContainer.style.left = '-99999px';
+    printContainer.style.top = '0';
+    printContainer.style.left = '0';
     printContainer.style.width = '794px';
     printContainer.style.height = '1122px';
     printContainer.style.background = '#FFFFFF';
@@ -2177,9 +2169,9 @@ www.autonoma.pe`;
     const opt = {
       margin: 0,
       filename: pdfFilename,
-      image: { type: 'jpeg', quality: 0.98 },
+      image: { type: 'jpeg', quality: 0.92 },
       html2canvas: {
-        scale: 2,
+        scale: 1.8,
         useCORS: true,
         logging: false,
         scrollY: 0,
@@ -2263,13 +2255,21 @@ www.autonoma.pe`;
     }
   }
 
-  // Descarga directa del archivo PDF oficial (1 clic, sin hojas en blanco)
+  // Descarga directa del archivo PDF oficial (1 clic, solo descarga, sin hojas en blanco)
   async function handleDirectDownloadPdf() {
+    const btn = document.getElementById('btnDirectDownloadPdf');
+    const origHtml = btn ? btn.innerHTML : '';
     try {
-      const { filename } = await generateDocumentPdf({ download: true });
-      if (!isPhoneOrMobile()) {
-        showToast(`Documento PDF "${filename}" descargado con éxito`, 'success', 4000);
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = `<span style="display:inline-block;width:12px;height:12px;border:2px solid currentColor;border-top-color:transparent;border-radius:50%;animation:spin 1s linear infinite;margin-right:4px;"></span> <span>Descargando...</span>`;
       }
+      showToast('📥 Generando archivo PDF oficial...', 'info', 2500);
+
+      const { filename } = await generateDocumentPdf({ download: true });
+
+      showToast(`✅ Documento PDF "${filename}" descargado con éxito`, 'success', 4000);
+
       try {
         const isCompromiso = state.tipoActa === 'compromiso';
         CloudDatabaseManager.saveActa({
@@ -2291,7 +2291,12 @@ www.autonoma.pe`;
       }
     } catch (err) {
       console.error('Error al descargar PDF:', err);
-      showToast('Error al generar PDF: ' + err.message, 'info');
+      showToast('Error al generar PDF: ' + err.message, 'error', 4000);
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = origHtml;
+      }
     }
   }
 
@@ -2329,9 +2334,10 @@ www.autonoma.pe`;
     loadDriveConfig();
 
     // Mostrar u ocultar banner de Webhook según el estado de configuración
+    const effectiveWh = (cachedDriveConfig && cachedDriveConfig.webhookUrl) || getEffectiveWebhookUrl() || OFFICIAL_DEFAULT_GAS_WEBHOOK;
     const banner = document.getElementById('emailWebhookBanner');
     if (banner) {
-      if (cachedDriveConfig && cachedDriveConfig.webhookUrl) {
+      if (effectiveWh) {
         banner.style.display = 'none';
       } else {
         banner.style.display = 'flex';
@@ -2461,13 +2467,13 @@ www.autonoma.pe`;
     const body = document.getElementById('emailBody')?.value.trim() || '';
 
     if (!to) {
-      alert('Por favor, ingresa el correo del destinatario.');
+      showToast('⚠️ Ingresa el correo del colaborador para enviar el acta', 'warning', 4000);
       document.getElementById('emailTo')?.focus();
       return;
     }
 
     if (!to.includes('@') || !to.includes('.')) {
-      alert(`⚠️ El correo "${to}" no es válido.\n\nAsegúrate de incluir el símbolo "@" institucional (ejemplo: bruno.paucar@autonoma.pe).`);
+      showToast(`⚠️ El correo "${to}" no es válido. Debe contener @ institucional.`, 'warning', 4000);
       document.getElementById('emailTo')?.focus();
       return;
     }
@@ -2480,9 +2486,9 @@ www.autonoma.pe`;
     const resultDesc = document.getElementById('emailResultDesc');
     const btnDirect = document.getElementById('btnSendDirectEmail');
 
-    // Comprobación de configuración: Si el usuario no ha conectado el Webhook de Google Apps Script
-    const hasWebhook = cachedDriveConfig && cachedDriveConfig.webhookUrl;
-    if (!hasWebhook) {
+    // Comprobación de Webhook oficial o configurado
+    const targetWebhook = (cachedDriveConfig && cachedDriveConfig.webhookUrl) || getEffectiveWebhookUrl() || OFFICIAL_DEFAULT_GAS_WEBHOOK;
+    if (!targetWebhook) {
       if (resultBox) {
         resultBox.style.display = 'flex';
         resultBox.style.background = '#FEF3C7';
@@ -2498,7 +2504,7 @@ www.autonoma.pe`;
       }
       if (resultDesc) {
         resultDesc.style.color = '#78350F';
-        resultDesc.innerHTML = `Para enviar correos 100% directos a la bandeja de entrada, necesitas conectar tu Webhook de Google Apps Script (tarda 1 minuto).<br><br>
+        resultDesc.innerHTML = `Para enviar correos 100% directos a la bandeja de entrada, necesitas conectar tu Webhook de Google Apps Script.<br><br>
         <strong>¿Deseas enviar ahora mismo?</strong><br>
         Haz clic en el botón <strong>Gmail</strong> u <strong>Outlook</strong> aquí abajo: descargará el PDF oficial de inmediato y abrirá tu correo listo con los datos para enviar.<br><br>
         <button type="button" id="btnGoToWebhookFromAlert" class="btn btn-primary btn-sm" style="margin-top:4px;">⚙️ Vincular Webhook de Google Apps Script</button>`;
@@ -2550,38 +2556,34 @@ www.autonoma.pe`;
         };
 
         let proxyOk = false;
-        try {
-          const res = await fetch('/api/gas-proxy', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json; charset=UTF-8' },
-            body: JSON.stringify(gasPayload)
-          });
+        const isLocalHost = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-          if (res.ok) {
-            const json = await res.json();
-            if (json.status === 'success') {
-              sent = true;
-              methodUsed = 'Google Workspace (Gmail Institucional)';
-              proxyOk = true;
-              try {
-                CloudDatabaseManager.saveActa({
-                  filename: filename,
-                  colabEmail: to,
-                  emailSent: true
-                });
-              } catch(ignore) {}
-            } else {
-              throw new Error(json.message || 'Respuesta no exitosa de Google Apps Script');
+        if (isLocalHost) {
+          try {
+            const res = await fetch('/api/gas-proxy', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+              body: JSON.stringify(gasPayload)
+            });
+
+            if (res.ok) {
+              const json = await res.json();
+              if (json.status === 'success') {
+                sent = true;
+                methodUsed = 'Google Workspace (Gmail Institucional)';
+                proxyOk = true;
+              } else {
+                throw new Error(json.message || 'Respuesta no exitosa de Google Apps Script');
+              }
             }
+          } catch (gasProxyErr) {
+            console.warn('Proxy local no disponible, enviando directo a GAS:', gasProxyErr);
           }
-        } catch (gasProxyErr) {
-          console.warn('Proxy local no disponible, enviando directo a GAS:', gasProxyErr);
         }
 
-        // Fallback directo si no hay servidor local (Surge / APK / Móvil)
+        // Fallback directo para GitHub Pages / Surge / APK nativo / Móvil
         if (!proxyOk) {
-          const rawWebhook = cachedDriveConfig.webhookUrl || getEffectiveWebhookUrl();
-          await fetch(rawWebhook, {
+          await fetch(targetWebhook, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -2589,14 +2591,16 @@ www.autonoma.pe`;
           });
           sent = true;
           methodUsed = 'Google Workspace (Directo)';
-          try {
-            CloudDatabaseManager.saveActa({
-              filename: filename,
-              colabEmail: to,
-              emailSent: true
-            });
-          } catch(ignore) {}
         }
+
+        try {
+          CloudDatabaseManager.saveActa({
+            filename: filename,
+            colabEmail: to,
+            emailSent: true
+          });
+        } catch(ignore) {}
+
       } catch (gasErr) {
         throw new Error(gasErr.message);
       }
@@ -2605,7 +2609,7 @@ www.autonoma.pe`;
       if (progressBox) progressBox.style.display = 'none';
       if (resultBox) resultBox.style.display = 'none';
       closeEmailModal();
-      showToast(`¡Acta oficial y PDF enviados con éxito a ${to}!`, 'success', 5000);
+      showToast(`✅ ¡Acta oficial y PDF enviados con éxito a ${to}!`, 'success', 5000);
 
     } catch (err) {
       console.error('Error al enviar correo:', err);
@@ -2627,7 +2631,7 @@ www.autonoma.pe`;
         resultDesc.style.color = '#7F1D1D';
         resultDesc.innerHTML = `${escapeHtml(err.message)}.<br><br>💡 Puedes hacer clic en el botón <strong>Gmail</strong> u <strong>Outlook</strong> para enviar el correo inmediatamente con el PDF oficial descargado.`;
       }
-      showToast('Error en envío: ' + err.message, 'info', 5000);
+      showToast('Error en envío: ' + err.message, 'error', 5000);
     } finally {
       if (btnDirect) btnDirect.disabled = false;
     }
