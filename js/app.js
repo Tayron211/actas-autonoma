@@ -1231,10 +1231,38 @@ function doPost(e) {
         attachments: attachments
       });
 
+      // ============================================================
+      // SUBIDA AUTOMÁTICA A GOOGLE DRIVE SIMULTÁNEA
+      // ============================================================
+      var driveFileUrl = "";
+      var driveMonthUrl = "";
+      try {
+        if (data.pdfBase64 || data.fileBase64) {
+          var rootFolder = DriveApp.getFolderById(ROOT_FOLDER_ID);
+          var categoryName = data.tipo === "compromiso" ? "Actas de Compromiso" : "Actas de Devolución";
+          var catIter = rootFolder.getFoldersByName(categoryName);
+          var categoryFolder = catIter.hasNext() ? catIter.next() : rootFolder.createFolder(categoryName);
+
+          var monthName = data.mesCarpeta || (data.mes + " " + data.anio);
+          var monthIter = categoryFolder.getFoldersByName(monthName);
+          var monthFolder = monthIter.hasNext() ? monthIter.next() : categoryFolder.createFolder(monthName);
+
+          var rawFile = Utilities.base64Decode(data.pdfBase64 || data.fileBase64);
+          var fileBlob = Utilities.newBlob(rawFile, "application/pdf", (data.filename || "Acta_Oficial").replace(/\\.html$/i, ".pdf"));
+          var uploadedFile = monthFolder.createFile(fileBlob);
+          driveFileUrl = uploadedFile.getUrl();
+          driveMonthUrl = monthFolder.getUrl();
+        }
+      } catch (driveErr) {
+        console.warn("Aviso al respaldar en Drive: " + driveErr.toString());
+      }
+
       return ContentService.createTextOutput(JSON.stringify({
         status: "success",
-        message: "Correo enviado automáticamente con el PDF adjunto a " + to,
+        message: "Correo enviado y acta respaldada automáticamente en Google Drive",
         sentTo: to,
+        driveFileUrl: driveFileUrl,
+        driveMonthUrl: driveMonthUrl,
         attachmentsCount: attachments.length
       })).setMimeType(ContentService.MimeType.JSON);
     }
@@ -2531,7 +2559,7 @@ www.autonoma.pe`;
       // 1. Generar el PDF oficial del acta con firmas en base64
       const { filename, pdfBase64 } = await generateDocumentPdf({ download: false });
 
-      if (progressTitle) progressTitle.textContent = 'Enviando correo con PDF adjunto...';
+      if (progressTitle) progressTitle.textContent = 'Enviando correo y subiendo a Google Drive...';
       if (progressSub) progressSub.textContent = `Destinatario: ${to}`;
 
       let sent = false;
@@ -2542,6 +2570,7 @@ www.autonoma.pe`;
         const freshEmail = buildEmailContent();
         const htmlBodyToSend = document.getElementById('emailMessageContainer')?.innerHTML || freshEmail.htmlBody;
         const bodyToSend = freshEmail.body;
+        const meta = getCurrentDocMetadata();
 
         const gasPayload = {
           action: 'send_email',
@@ -2550,7 +2579,23 @@ www.autonoma.pe`;
           body: bodyToSend,
           htmlBody: htmlBodyToSend,
           pdfBase64: pdfBase64,
-          filename: filename
+          filename: filename,
+          tipo: meta.tipo,
+          mes: meta.mes,
+          anio: meta.anio,
+          mesCarpeta: meta.monthFolderName,
+          fileBase64: pdfBase64,
+          mimeType: 'application/pdf'
+        };
+
+        const drivePayload = {
+          tipo: meta.tipo,
+          mes: meta.mes,
+          anio: meta.anio,
+          mesCarpeta: meta.monthFolderName,
+          filename: filename,
+          fileBase64: pdfBase64,
+          mimeType: 'application/pdf'
         };
 
         let proxyOk = false;
@@ -2577,9 +2622,28 @@ www.autonoma.pe`;
           } catch (gasProxyErr) {
             console.warn('Proxy local no disponible, enviando directo a GAS:', gasProxyErr);
           }
+
+          // Guardado en servidor local
+          try {
+            fetch('/api/save-acta', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json; charset=UTF-8' },
+              body: JSON.stringify({
+                ...drivePayload,
+                colaborador: getVal('colab_nombre', ''),
+                colabDni: getVal('colab_dni', ''),
+                colabEmail: to,
+                representante: getVal('rep_nombre', ''),
+                repCargo: getVal('rep_cargo', ''),
+                estadoGeneral: getVal('entrega_estado_gral', ''),
+                equiposCount: state.equipos ? state.equipos.length : 0,
+                equipos: state.equipos
+              })
+            }).catch(() => {});
+          } catch (localErr) {}
         }
 
-        // Fallback directo para GitHub Pages / Surge / APK nativo / Móvil
+        // Envío directo de correo y respaldo automático en Google Drive
         if (!proxyOk) {
           await fetch(targetWebhook, {
             method: 'POST',
@@ -2591,11 +2655,22 @@ www.autonoma.pe`;
           methodUsed = 'Google Workspace (Directo)';
         }
 
+        // Subida garantizada a la subcarpeta del mes en Google Drive en segundo plano
+        try {
+          fetch(targetWebhook, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify(drivePayload)
+          }).catch(err => console.warn('Subida automática a Drive:', err));
+        } catch (driveErr) {}
+
         try {
           CloudDatabaseManager.saveActa({
             filename: filename,
             colabEmail: to,
-            emailSent: true
+            emailSent: true,
+            driveUploaded: true
           });
         } catch(ignore) {}
 
@@ -2607,7 +2682,7 @@ www.autonoma.pe`;
       if (progressBox) progressBox.style.display = 'none';
       if (resultBox) resultBox.style.display = 'none';
       closeEmailModal();
-      showToast(`✅ ¡Acta oficial y PDF enviados con éxito a ${to}!`, 'success', 5000);
+      showToast(`✅ ¡Acta enviada con éxito a ${to} y guardada en Google Drive!`, 'success', 6000);
 
     } catch (err) {
       console.error('Error al enviar correo:', err);

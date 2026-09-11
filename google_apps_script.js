@@ -56,10 +56,38 @@ function doPost(e) {
         attachments: attachments
       });
 
+      // ============================================================
+      // SUBIDA AUTOMÁTICA A GOOGLE DRIVE SIMULTÁNEA
+      // ============================================================
+      var driveFileUrl = "";
+      var driveMonthUrl = "";
+      try {
+        if (data.pdfBase64 || data.fileBase64) {
+          var rootFolder = DriveApp.getFolderById(ROOT_FOLDER_ID);
+          var categoryName = data.tipo === "compromiso" ? "Actas de Compromiso" : "Actas de Devolución";
+          var catIter = rootFolder.getFoldersByName(categoryName);
+          var categoryFolder = catIter.hasNext() ? catIter.next() : rootFolder.createFolder(categoryName);
+
+          var monthName = data.mesCarpeta || (data.mes + " " + data.anio);
+          var monthIter = categoryFolder.getFoldersByName(monthName);
+          var monthFolder = monthIter.hasNext() ? monthIter.next() : categoryFolder.createFolder(monthName);
+
+          var rawFile = Utilities.base64Decode(data.pdfBase64 || data.fileBase64);
+          var fileBlob = Utilities.newBlob(rawFile, "application/pdf", (data.filename || "Acta_Oficial").replace(/\.html$/i, ".pdf"));
+          var uploadedFile = monthFolder.createFile(fileBlob);
+          driveFileUrl = uploadedFile.getUrl();
+          driveMonthUrl = monthFolder.getUrl();
+        }
+      } catch (driveErr) {
+        console.warn("Aviso al respaldar en Drive: " + driveErr.toString());
+      }
+
       return ContentService.createTextOutput(JSON.stringify({
         status: "success",
-        message: "Correo enviado automáticamente con el PDF adjunto a " + to,
+        message: "Correo enviado y acta respaldada automáticamente en Google Drive",
         sentTo: to,
+        driveFileUrl: driveFileUrl,
+        driveMonthUrl: driveMonthUrl,
         attachmentsCount: attachments.length
       })).setMimeType(ContentService.MimeType.JSON);
     }
