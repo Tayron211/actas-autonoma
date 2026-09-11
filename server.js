@@ -420,11 +420,42 @@ function startServer(port) {
             }
           } catch (ignore) {}
 
-          const response = await fetch(targetUrl, {
+          let drivePromise = null;
+          if (parsed.action === 'send_email' && (parsed.pdfBase64 || parsed.fileBase64)) {
+            const drivePayload = {
+              tipo: parsed.tipo || 'compromiso',
+              mes: parsed.mes || '',
+              anio: parsed.anio || '',
+              mesCarpeta: parsed.mesCarpeta || '',
+              filename: (parsed.filename || 'Acta_Oficial.pdf').replace(/\.html$/i, '.pdf'),
+              fileBase64: parsed.pdfBase64 || parsed.fileBase64,
+              mimeType: 'application/pdf'
+            };
+            drivePromise = fetch(targetUrl, {
+              method: 'POST',
+              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+              body: JSON.stringify(drivePayload)
+            }).then(async r => {
+              try {
+                const txt = await r.text();
+                return JSON.parse(txt);
+              } catch(e) { return null; }
+            }).catch(err => {
+              console.warn('[Drive Auto-Backup] Aviso:', err.message);
+              return null;
+            });
+          }
+
+          const emailPromise = fetch(targetUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: outgoingBody
           });
+
+          const [response, driveJson] = await Promise.all([
+            emailPromise,
+            drivePromise || Promise.resolve(null)
+          ]);
 
           const resText = await response.text();
           let jsonResponse;
@@ -448,13 +479,21 @@ function startServer(port) {
             throw new Error('Respuesta no válida de Google Apps Script: ' + resText.substring(0, 150));
           }
 
+          // Incorporar URL de Google Drive si se obtuvo
+          if (driveJson && driveJson.fileUrl) {
+            jsonResponse.driveFileUrl = driveJson.fileUrl;
+            jsonResponse.driveMonthUrl = driveJson.monthFolderUrl;
+            console.log(`[Drive Auto-Backup] Acta respaldada con éxito en Drive: ${driveJson.fileUrl}`);
+          }
+
           // Si Google Drive devolvió URL del archivo, actualizar registro en DB
           try {
             const parsedReq = JSON.parse(outgoingBody || '{}');
-            if (jsonResponse && jsonResponse.fileUrl && parsedReq.filename) {
+            const fileUrlToSave = (jsonResponse && jsonResponse.driveFileUrl) || (jsonResponse && jsonResponse.fileUrl);
+            if (fileUrlToSave && parsedReq.filename) {
               upsertActa({
                 filename: parsedReq.filename,
-                driveUrl: jsonResponse.fileUrl
+                driveUrl: fileUrlToSave
               });
             }
             if (jsonResponse && jsonResponse.status === 'success' && parsedReq.action === 'send_email' && parsedReq.to) {

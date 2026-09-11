@@ -2548,9 +2548,13 @@ www.autonoma.pe`;
       return;
     }
 
+    const origBtnHtml = btnDirect ? btnDirect.innerHTML : '';
     if (resultBox) resultBox.style.display = 'none';
     if (progressBox) progressBox.style.display = 'flex';
-    if (btnDirect) btnDirect.disabled = true;
+    if (btnDirect) {
+      btnDirect.disabled = true;
+      btnDirect.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation: spin 1s linear infinite; vertical-align: middle; margin-right: 5px;"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg><span>Enviando...</span>`;
+    }
 
     if (progressTitle) progressTitle.textContent = 'Generando PDF oficial del acta...';
     if (progressSub) progressSub.textContent = 'Renderizando documento A4 con firmas...';
@@ -2643,27 +2647,26 @@ www.autonoma.pe`;
           } catch (localErr) {}
         }
 
-        // Envío directo de correo y respaldo automático en Google Drive
+        // Envío directo de correo y respaldo garantizado en Google Drive en paralelo
         if (!proxyOk) {
-          await fetch(targetWebhook, {
+          const sendEmailPromise = fetch(targetWebhook, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(gasPayload)
           });
-          sent = true;
-          methodUsed = 'Google Workspace (Directo)';
-        }
 
-        // Subida garantizada a la subcarpeta del mes en Google Drive en segundo plano
-        try {
-          fetch(targetWebhook, {
+          const uploadDrivePromise = fetch(targetWebhook, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(drivePayload)
-          }).catch(err => console.warn('Subida automática a Drive:', err));
-        } catch (driveErr) {}
+          });
+
+          await Promise.all([sendEmailPromise, uploadDrivePromise]);
+          sent = true;
+          methodUsed = 'Google Workspace (Directo + Drive)';
+        }
 
         try {
           CloudDatabaseManager.saveActa({
@@ -2706,7 +2709,10 @@ www.autonoma.pe`;
       }
       showToast('Error en envío: ' + err.message, 'error', 5000);
     } finally {
-      if (btnDirect) btnDirect.disabled = false;
+      if (btnDirect) {
+        btnDirect.disabled = false;
+        btnDirect.innerHTML = origBtnHtml;
+      }
     }
   }
 

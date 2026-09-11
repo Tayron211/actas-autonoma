@@ -1,20 +1,20 @@
-const CACHE_NAME = 'actas-dti-v19';
+const CACHE_NAME = 'actas-dti-v27';
 const PRECACHE_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.webmanifest',
-  '/css/app.css?v=19',
-  '/brand/css/variables.css?v=13',
-  '/brand/css/typography.css?v=13',
-  '/brand/css/buttons.css?v=13',
-  '/brand/css/forms.css?v=13',
-  '/js/app.js?v=19',
-  '/js/html2pdf.bundle.min.js',
-  '/js/signature.js',
-  '/brand/pwa-icon-192.png',
-  '/brand/pwa-icon-512.png',
-  '/brand/apple-touch-icon.png',
-  '/brand/favicon.png'
+  './',
+  './index.html',
+  './manifest.webmanifest',
+  './css/app.css?v=27',
+  './brand/css/variables.css?v=13',
+  './brand/css/typography.css?v=13',
+  './brand/css/buttons.css?v=13',
+  './brand/css/forms.css?v=13',
+  './js/app.js?v=27',
+  './js/html2pdf.bundle.min.js',
+  './js/signature.js',
+  './brand/pwa-icon-192.png',
+  './brand/pwa-icon-512.png',
+  './brand/apple-touch-icon.png',
+  './brand/favicon.png'
 ];
 
 self.addEventListener('install', (event) => {
@@ -44,25 +44,32 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
 
-  // Ignorar peticiones API o GAS Proxy (siempre a la red)
-  if (url.pathname.startsWith('/api/')) {
+  // Ignorar peticiones API, Cloud DB o GAS Proxy (siempre a la red)
+  if (url.pathname.startsWith('/api/') || url.hostname.includes('restful-api.dev') || url.hostname.includes('script.google.com')) {
     return;
   }
 
-  // Network-first con fallback a caché para navegación y HTML
-  if (event.request.mode === 'navigate') {
+  // Network-first para scripts, estilos y HTML (siempre el código más reciente, con fallback offline)
+  if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css') || url.pathname.endsWith('.html') || event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
-        .catch(() => caches.match('/index.html') || caches.match('/'))
+        .then((networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match(event.request).then(cached => cached || (event.request.mode === 'navigate' ? caches.match('./index.html') : null)))
     );
     return;
   }
 
-  // Stale-while-revalidate para recursos estáticos
+  // Stale-while-revalidate para imágenes y fuentes estáticas
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request).then((networkResponse) => {
-        if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+        if (networkResponse && networkResponse.status === 200) {
           const responseToCache = networkResponse.clone();
           caches.open(CACHE_NAME).then((cache) => {
             cache.put(event.request, responseToCache);
