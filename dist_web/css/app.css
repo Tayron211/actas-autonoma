@@ -2509,3 +2509,22 @@ body.is-printing .document-container {
 body.is-printing .app-bottom-bar {
   display: none !important;
 }
+
+/* Indicador Punto Verde en Tiempo Real */
+@keyframes liveDotPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+    box-shadow: 0 0 6px #10B981;
+  }
+  50% {
+    transform: scale(1.25);
+    opacity: 0.85;
+    box-shadow: 0 0 10px #10B981;
+  }
+}
+
+.live-dot-indicator {
+  animation: liveDotPulse 2s infinite ease-in-out;
+  cursor: help;
+}

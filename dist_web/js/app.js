@@ -3110,24 +3110,20 @@ www.autonoma.pe`;
 
     updateBadge(status) {
       const badge = document.getElementById('cloudDbLiveBadge');
-      const text = document.getElementById('cloudDbLiveText');
-      if (!badge || !text) return;
+      if (!badge) return;
 
       if (status === 'syncing') {
-        text.textContent = 'Sincronizando...';
-        badge.style.background = '#EFF6FF';
-        badge.style.color = '#1D4ED8';
-        badge.style.borderColor = '#BFDBFE';
+        badge.style.background = '#3B82F6';
+        badge.style.boxShadow = '0 0 8px #3B82F6';
+        badge.title = 'Sincronizando con la nube...';
       } else if (status === 'error') {
-        text.textContent = 'Modo Offline (Caché Local)';
-        badge.style.background = '#FFF7ED';
-        badge.style.color = '#EA580C';
-        badge.style.borderColor = '#FED7AA';
+        badge.style.background = '#F59E0B';
+        badge.style.boxShadow = '0 0 8px #F59E0B';
+        badge.title = 'Modo Offline (Caché Local)';
       } else {
-        text.textContent = 'Nube en Tiempo Real';
-        badge.style.background = '#ECFDF5';
-        badge.style.color = '#065F46';
-        badge.style.borderColor = '#A7F3D0';
+        badge.style.background = '#10B981';
+        badge.style.boxShadow = '0 0 8px #10B981';
+        badge.title = 'Nube en Tiempo Real';
       }
     },
 
