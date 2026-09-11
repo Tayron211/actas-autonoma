@@ -596,6 +596,22 @@ async function startPublicTunnel(port) {
     const publicUrlFile = path.join(DATA_DIR, 'public_url.txt');
     fs.writeFileSync(publicUrlFile, currentPublicUrl, 'utf8');
 
+    // Sincronizar URL de la nube en config.json para web y app móvil
+    try {
+      const cfgPath = path.join(ROOT_DIR, 'config.json');
+      if (fs.existsSync(cfgPath)) {
+        const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
+        cfg.cloudApiUrl = currentPublicUrl;
+        fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2), 'utf8');
+      }
+      const distCfgPath = path.join(ROOT_DIR, 'dist_web/config.json');
+      if (fs.existsSync(distCfgPath)) {
+        const distCfg = JSON.parse(fs.readFileSync(distCfgPath, 'utf8'));
+        distCfg.cloudApiUrl = currentPublicUrl;
+        fs.writeFileSync(distCfgPath, JSON.stringify(distCfg, null, 2), 'utf8');
+      }
+    } catch(e) {}
+
     console.log(`\n======================================================`);
     console.log(`  🌍 WEB Y APK OFICIALES EN LA NUBE (PERMANENTE):`);
     console.log(`  🌐 Web Móvil / PC:      https://actas-autonoma.surge.sh`);

@@ -467,7 +467,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnOpenHistoryModal')?.addEventListener('click', openHistoryModal);
     document.getElementById('mNavHistory')?.addEventListener('click', openHistoryModal);
     document.getElementById('btnHistoryModalClose')?.addEventListener('click', closeHistoryModal);
-    document.getElementById('btnRefreshHistory')?.addEventListener('click', loadHistoryData);
+    document.getElementById('btnRefreshHistory')?.addEventListener('click', async () => {
+      const btn = document.getElementById('btnRefreshHistory');
+      if (btn) btn.classList.add('btn-refreshing');
+      await loadHistoryData();
+      if (btn) setTimeout(() => btn.classList.remove('btn-refreshing'), 600);
+    });
     document.getElementById('historySearchInput')?.addEventListener('input', renderHistoryList);
     document.querySelectorAll('.history-filter-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -3006,7 +3011,7 @@ www.autonoma.pe`;
   // ============================================================
   // BASE DE DATOS EN LA NUBE 100% PERMANENTE & EN TIEMPO REAL
   // ============================================================
-  const CLOUD_DB_ENDPOINT = 'https://api.restful-api.dev/objects/ff808181a067127101a08f30555871e8';
+  const DEFAULT_CLOUD_API = 'https://array-exports-organizer-existence.trycloudflare.com/api/actas';
   const LOCAL_STORAGE_KEY = 'ua_actas_cloud_cache_v1';
 
   var CloudDatabaseManager = {
@@ -3014,8 +3019,11 @@ www.autonoma.pe`;
     listeners: [],
     isSyncing: false,
     lastSyncTime: null,
+    customCloudUrl: null,
+    activeApiUrl: DEFAULT_CLOUD_API,
+    pollTimer: null,
 
-    init() {
+    async init() {
       // 1. Cargar caché local instantánea
       try {
         const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
@@ -3024,7 +3032,7 @@ www.autonoma.pe`;
         }
       } catch (e) {}
 
-      // 2. Cargar desde AndroidBridge si estamos en la app móvil
+      // 2. Cargar desde AndroidBridge si estamos en la app móvil nativa
       try {
         if (window.AndroidBridge && typeof window.AndroidBridge.getActas === 'function') {
           const nativeList = JSON.parse(window.AndroidBridge.getActas() || '[]');
@@ -3034,14 +3042,30 @@ www.autonoma.pe`;
         }
       } catch (e) {}
 
-      // 3. Limpiar cualquier registro huérfano/vacío (sin colaborador ni equipos)
+      // 3. Limpiar cualquier registro huérfano/vacío
       this.cleanEmptyActas();
       cachedHistoryActas = this.actas;
 
-      // 4. Primera sincronización
+      // 4. Intentar cargar config.json para descubrir URL de nube actualizada
+      try {
+        const cfgRes = await fetch('config.json');
+        if (cfgRes.ok) {
+          const cfg = await cfgRes.json();
+          if (cfg && cfg.cloudApiUrl) {
+            this.customCloudUrl = cfg.cloudApiUrl.replace(/\/$/, '');
+          }
+        }
+      } catch(e) {}
+
+      // 5. Primera sincronización inmediata
       this.syncFromCloud();
 
-      // 5. Sincronización inteligente (al cambiar de pestaña o volver a enfocar)
+      // 6. Sincronización inteligente en segundo plano (cada 25s)
+      setInterval(() => {
+        this.syncFromCloud();
+      }, 25000);
+
+      // 7. Sincronización al volver a enfocar la pestaña / volver a la app
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
           this.syncFromCloud();
@@ -3051,7 +3075,7 @@ www.autonoma.pe`;
         this.syncFromCloud();
       });
 
-      // 6. Suscribir render de historial a cambios en tiempo real
+      // 8. Suscribir render de historial a cambios en tiempo real
       this.subscribe((actas) => {
         cachedHistoryActas = actas;
         const historyModal = document.getElementById('historyModal');
@@ -3079,9 +3103,13 @@ www.autonoma.pe`;
     mergeActas(incomingList) {
       if (!Array.isArray(incomingList)) return;
       const map = new Map();
-      this.actas.forEach(a => map.set(a.id || a.filename, a));
+      this.actas.forEach(a => {
+        const key = a.id || a.filename;
+        if (key) map.set(key, a);
+      });
       incomingList.forEach(a => {
         const key = a.id || a.filename;
+        if (!key) return;
         const existing = map.get(key);
         if (!existing || new Date(a.updatedAt || 0) >= new Date(existing.updatedAt || 0)) {
           map.set(key, { ...(existing || {}), ...a });
@@ -3123,52 +3151,61 @@ www.autonoma.pe`;
       } else {
         badge.style.background = '#10B981';
         badge.style.boxShadow = '0 0 8px #10B981';
-        badge.title = 'Nube en Tiempo Real';
+        badge.title = 'Nube en Tiempo Real (Sincronizado)';
       }
     },
 
     async syncFromCloud() {
       if (this.isSyncing) return;
       this.isSyncing = true;
+      this.updateBadge('syncing');
+
+      let syncSuccess = false;
+
+      // A. Sincronizar desde AndroidBridge (si estamos en APK nativo)
       try {
-        // A. Sincronizar desde servidor local si está activo
-        try {
-          const localRes = await fetch('/api/actas');
-          if (localRes.ok) {
-            const json = await localRes.json();
-            if (json && Array.isArray(json.actas)) {
-              this.mergeActas(json.actas);
-            }
+        if (window.AndroidBridge && typeof window.AndroidBridge.getActas === 'function') {
+          const nativeList = JSON.parse(window.AndroidBridge.getActas() || '[]');
+          if (Array.isArray(nativeList) && nativeList.length > 0) {
+            this.mergeActas(nativeList);
+            syncSuccess = true;
           }
-        } catch(e) {}
+        }
+      } catch(e) {}
 
-        // B. Sincronizar desde AndroidBridge
-        try {
-          if (window.AndroidBridge && typeof window.AndroidBridge.getActas === 'function') {
-            const nativeList = JSON.parse(window.AndroidBridge.getActas() || '[]');
-            if (Array.isArray(nativeList) && nativeList.length > 0) {
-              this.mergeActas(nativeList);
-            }
-          }
-        } catch(e) {}
+      // B. Candidatos a endpoints para sincronización en la nube (multi-tier)
+      const candidateEndpoints = [];
+      if (this.customCloudUrl) {
+        candidateEndpoints.push(this.customCloudUrl + '/api/actas');
+      }
+      candidateEndpoints.push(DEFAULT_CLOUD_API);
+      candidateEndpoints.push('/api/actas');
+      candidateEndpoints.push('data/actas_db.json');
 
-        // C. Sincronizar desde la nube
+      for (const ep of candidateEndpoints) {
         try {
-          const res = await fetch(CLOUD_DB_ENDPOINT);
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 4000);
+          const res = await fetch(ep, { signal: controller.signal });
+          clearTimeout(timeoutId);
           if (res.ok) {
             const json = await res.json();
-            if (json && json.data && Array.isArray(json.data.actas)) {
-              this.mergeActas(json.data.actas);
+            const incoming = Array.isArray(json) ? json : (json.actas || []);
+            if (Array.isArray(incoming) && incoming.length > 0) {
+              this.mergeActas(incoming);
+              syncSuccess = true;
+              if (!ep.endsWith('.json')) {
+                this.activeApiUrl = ep;
+              }
+              break;
             }
           }
         } catch(e) {}
-
-        this.updateBadge('online');
-      } catch (err) {
-        this.updateBadge('error');
-      } finally {
-        this.isSyncing = false;
       }
+
+      this.updateBadge(syncSuccess ? 'online' : 'error');
+      this.isSyncing = false;
+      return syncSuccess;
     },
 
     async saveActa(acta) {
@@ -3181,7 +3218,6 @@ www.autonoma.pe`;
         ...acta
       };
 
-      // Si no tiene nombre de colaborador válido, asignar fallback
       if (!newActa.colaborador || newActa.colaborador.trim() === '' || newActa.colaborador === 'Colaborador') {
         newActa.colaborador = newActa.colabEmail ? newActa.colabEmail.split('@')[0] : 'Colaborador';
       }
@@ -3207,34 +3243,32 @@ www.autonoma.pe`;
         } catch(e) {}
       }
 
-      // 2. Si hay servidor local activo, respaldar en actas_db.json
-      try {
-        fetch('/api/actas', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newActa)
-        }).catch(() => {});
-      } catch (e) {}
+      // 2. Guardar en la nube y/o servidor local
+      const saveEndpoints = [
+        this.activeApiUrl,
+        this.customCloudUrl ? this.customCloudUrl + '/api/actas' : null,
+        DEFAULT_CLOUD_API,
+        '/api/actas'
+      ].filter(Boolean);
 
-      // 3. Guardar en la nube si el endpoint está disponible
-      try {
-        await fetch(CLOUD_DB_ENDPOINT, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: 'AUTONOMA_ACTAS_DATABASE',
-            data: {
-              version: 1,
-              lastSync: new Date().toISOString(),
-              actas: this.actas
-            }
-          })
-        });
-        this.updateBadge('online');
-      } catch (e) {
-        this.updateBadge('online');
+      const uniqueEndpoints = [...new Set(saveEndpoints)];
+
+      for (const ep of uniqueEndpoints) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 4000);
+          await fetch(ep, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newActa),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+          break;
+        } catch(e) {}
       }
 
+      this.updateBadge('online');
       return newActa;
     },
 
@@ -3247,37 +3281,52 @@ www.autonoma.pe`;
       this.notifyListeners();
       this.updateBadge('syncing');
 
-      try {
-        await fetch(CLOUD_DB_ENDPOINT, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            name: 'AUTONOMA_ACTAS_DATABASE',
-            data: {
-              version: 1,
-              lastSync: new Date().toISOString(),
-              actas: this.actas
-            }
-          })
-        });
-        this.updateBadge('online');
-      } catch (e) {
-        this.updateBadge('online');
+      const delEndpoints = [
+        this.activeApiUrl,
+        this.customCloudUrl ? this.customCloudUrl + '/api/actas' : null,
+        DEFAULT_CLOUD_API,
+        '/api/actas'
+      ].filter(Boolean);
+
+      const uniqueEndpoints = [...new Set(delEndpoints)];
+      for (const ep of uniqueEndpoints) {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 4000);
+          await fetch(ep, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id }),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+          break;
+        } catch(e) {}
       }
 
-      try {
-        fetch('/api/actas', {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id })
-        }).catch(() => {});
-      } catch (e) {}
+      this.updateBadge('online');
+    },
+
+    startModalRealtimePolling() {
+      if (this.pollTimer) clearInterval(this.pollTimer);
+      this.pollTimer = setInterval(() => {
+        this.syncFromCloud();
+      }, 5000); // Polling cada 5s en tiempo real mientras el modal esté abierto
+    },
+
+    stopModalRealtimePolling() {
+      if (this.pollTimer) {
+        clearInterval(this.pollTimer);
+        this.pollTimer = null;
+      }
     },
 
     getActas() {
       return this.actas;
     }
   };
+
+  window.CloudDatabaseManager = CloudDatabaseManager;
 
   let cachedHistoryActas = [];
   let currentHistoryFilter = 'all';
@@ -3288,11 +3337,13 @@ www.autonoma.pe`;
       modal.classList.remove('is-closing');
       modal.classList.add('active');
     }
+    CloudDatabaseManager.startModalRealtimePolling();
     loadHistoryData();
   }
 
   function closeHistoryModal() {
     const modal = document.getElementById('historyModal');
+    CloudDatabaseManager.stopModalRealtimePolling();
     smoothlyCloseModal(modal);
   }
 
