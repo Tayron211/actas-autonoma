@@ -566,62 +566,11 @@ function startServer(port) {
         }
       }
     }
+    console.log(`  Cloud 24/7 Webhook: ${OFFICIAL_DEFAULT_GAS_WEBHOOK}`);
     console.log(`======================================================\n`);
-
-    startPublicTunnel(port);
   });
 }
 
-function updateUlvis(targetUrl, customAlias) {
-  return new Promise((resolve) => {
-    try {
-      const https = require('https');
-      const req = https.get(`https://ulvis.net/api.php?url=${encodeURIComponent(targetUrl)}&custom=${encodeURIComponent(customAlias)}`, res => {
-        let d = '';
-        res.on('data', c => d += c);
-        res.on('end', () => resolve(d.trim()));
-      });
-      req.on('error', () => resolve(null));
-      req.setTimeout(5000, () => { req.destroy(); resolve(null); });
-    } catch (e) { resolve(null); }
-  });
-}
-
-async function startPublicTunnel(port) {
-  try {
-    const { startTunnel } = require('untun');
-    console.log('  🌐 Estableciendo enlace público mundial en la nube (Cloudflare)...');
-    const tunnel = await startTunnel({ port });
-    currentPublicUrl = await tunnel.getURL();
-    const publicUrlFile = path.join(DATA_DIR, 'public_url.txt');
-    fs.writeFileSync(publicUrlFile, currentPublicUrl, 'utf8');
-
-    // Sincronizar URL de la nube en config.json para web y app móvil
-    try {
-      const cfgPath = path.join(ROOT_DIR, 'config.json');
-      if (fs.existsSync(cfgPath)) {
-        const cfg = JSON.parse(fs.readFileSync(cfgPath, 'utf8'));
-        cfg.cloudApiUrl = currentPublicUrl;
-        fs.writeFileSync(cfgPath, JSON.stringify(cfg, null, 2), 'utf8');
-      }
-      const distCfgPath = path.join(ROOT_DIR, 'dist_web/config.json');
-      if (fs.existsSync(distCfgPath)) {
-        const distCfg = JSON.parse(fs.readFileSync(distCfgPath, 'utf8'));
-        distCfg.cloudApiUrl = currentPublicUrl;
-        fs.writeFileSync(distCfgPath, JSON.stringify(distCfg, null, 2), 'utf8');
-      }
-    } catch(e) {}
-
-    console.log(`\n======================================================`);
-    console.log(`  🌍 WEB Y APK OFICIALES EN LA NUBE (PERMANENTE):`);
-    console.log(`  🌐 Web Móvil / PC:      https://actas-autonoma.surge.sh`);
-    console.log(`  📲 Descarga APK Corto:  https://tinyurl.com/ua-apk`);
-    console.log(`  📥 Descarga Directa:    https://actas-autonoma.surge.sh/apk`);
-    console.log(`======================================================\n`);
-  } catch (err) {
-    console.log('  Nota: Túnel público Cloudflare no disponible o desconectado:', err.message);
-  }
-}
 
 startServer(DEFAULT_PORT);
 

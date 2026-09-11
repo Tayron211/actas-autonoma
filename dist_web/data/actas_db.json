@@ -1,5 +1,35 @@
 [
   {
+    "id": "ACTA-1789143268576-682",
+    "createdAt": "2026-09-11T16:14:28.576Z",
+    "updatedAt": "2026-09-11T16:14:28.576Z",
+    "tipoActa": "compromiso",
+    "titulo": "Acta de Compromiso",
+    "colaborador": "tayron.salinas",
+    "colabDni": "",
+    "colabEmail": "tayron.salinas@autonoma.pe",
+    "representante": "",
+    "repCargo": "",
+    "fecha": "11/9/2026",
+    "estadoGeneral": "OPERATIVO Y EN BUEN ESTADO FÍSICO",
+    "equiposCount": 1,
+    "equipos": [
+      {
+        "etiqueta": "AUT-LAP-0482",
+        "descripcion": "Laptop ThinkPad L14 Gen 3",
+        "marca": "Lenovo",
+        "modelo": "21C2S03C00",
+        "serie": "PF3Z2K81",
+        "estado": "Bueno"
+      }
+    ],
+    "filename": "Acta_Compromiso_Colaborador_2026-09-11.pdf",
+    "driveUrl": "https://drive.google.com/drive/search?q=Acta_Compromiso_Colaborador_2026-09-11.pdf",
+    "driveFolderUrl": "https://drive.google.com/drive/folders/1XzJVp9KewZiSoFCVgLCK-vd28bLnMr1P",
+    "emailSent": true,
+    "driveUploaded": true
+  },
+  {
     "id": "ACTA-1789141202260-945",
     "createdAt": "2026-09-11T15:40:02.260Z",
     "updatedAt": "2026-09-11T15:40:02.262Z",

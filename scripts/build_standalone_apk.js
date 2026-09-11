@@ -64,6 +64,9 @@ if (fs.existsSync(path.join(ROOT_DIR, 'config.json'))) {
 copyFolderSync(path.join(ROOT_DIR, 'css'), path.join(assetsDir, 'css'));
 copyFolderSync(path.join(ROOT_DIR, 'js'), path.join(assetsDir, 'js'));
 copyFolderSync(path.join(ROOT_DIR, 'brand'), path.join(assetsDir, 'brand'));
+if (fs.existsSync(path.join(ROOT_DIR, 'data'))) {
+  copyFolderSync(path.join(ROOT_DIR, 'data'), path.join(assetsDir, 'data'));
+}
 
 console.log('   Archivos web empaquetados en assets/ con éxito.');
 
