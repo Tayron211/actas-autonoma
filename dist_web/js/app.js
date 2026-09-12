@@ -2423,8 +2423,63 @@ www.autonoma.pe`;
 
     state.isGeneratingPdf = true;
 
+    // Inyectar regla estricta de alineación en el documento principal
+    // para evitar que el contenedor de html2pdf se desplace hacia la izquierda en pantallas móviles
+    let fixStyle = document.getElementById('html2pdfOverlayMobileFix');
+    if (!fixStyle) {
+      fixStyle = document.createElement('style');
+      fixStyle.id = 'html2pdfOverlayMobileFix';
+      fixStyle.textContent = `
+        .html2pdf__overlay {
+          position: fixed !important;
+          left: 0 !important;
+          top: 0 !important;
+          width: 820px !important;
+          min-width: 820px !important;
+          right: auto !important;
+          bottom: auto !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          overflow: visible !important;
+          z-index: -99999 !important;
+          opacity: 0 !important;
+          pointer-events: none !important;
+        }
+        .html2pdf__container {
+          position: absolute !important;
+          left: 0 !important;
+          top: 0 !important;
+          right: auto !important;
+          bottom: auto !important;
+          margin: 0 !important;
+          padding: 0 !important;
+          width: 794px !important;
+          min-width: 794px !important;
+          max-width: 794px !important;
+          transform: none !important;
+          box-sizing: border-box !important;
+        }
+      `;
+      document.head.appendChild(fixStyle);
+    }
+
+    // Salvar temporalmente los estilos inline que fitDocumentToScreen() aplica a la hoja
+    const prevTransform = sheet.style.transform;
+    const prevOrigin = sheet.style.transformOrigin;
+    const prevMarginLeft = sheet.style.marginLeft;
+    const prevMarginRight = sheet.style.marginRight;
+    const prevMarginBottom = sheet.style.marginBottom;
+    const prevWidth = sheet.style.width;
+
+    // Resetear a posición estándar A4 antes de clonar para evitar heredar márgenes negativos de móvil
+    sheet.style.transform = 'none';
+    sheet.style.transformOrigin = 'top center';
+    sheet.style.marginLeft = '0';
+    sheet.style.marginRight = '0';
+    sheet.style.marginBottom = '0';
+    sheet.style.width = '794px';
+
     // Crear un iframe aislado con resolución estándar de escritorio (800px)
-    // para garantizar que en cualquier dispositivo móvil o pantalla pequeña el A4 se renderice 100% completo y centrado
     const iframe = document.createElement('iframe');
     iframe.id = 'pdfIsolatedRenderFrame';
     iframe.style.position = 'fixed';
@@ -2462,7 +2517,9 @@ www.autonoma.pe`;
           print-color-adjust: exact !important;
         }
         .a4-sheet {
-          margin: 0 auto !important;
+          margin: 0 !important;
+          margin-left: 0 !important;
+          margin-right: 0 !important;
           transform: none !important;
           box-shadow: none !important;
           border: none !important;
@@ -2473,23 +2530,36 @@ www.autonoma.pe`;
           min-height: 1122px !important;
           height: auto !important;
           overflow: visible !important;
+          box-sizing: border-box !important;
         }
       `;
       iDoc.head.appendChild(resetStyle);
 
       // Clonar la hoja del documento oficial
       const clone = sheet.cloneNode(true);
+
+      // Restaurar estilos en la hoja visible inmediatamente
+      sheet.style.transform = prevTransform;
+      sheet.style.transformOrigin = prevOrigin;
+      sheet.style.marginLeft = prevMarginLeft;
+      sheet.style.marginRight = prevMarginRight;
+      sheet.style.marginBottom = prevMarginBottom;
+      sheet.style.width = prevWidth;
+
       clone.id = 'officialDocumentSheetPdfClone';
       clone.style.transform = 'none';
-      clone.style.margin = '0 auto';
-      clone.style.marginLeft = 'auto';
-      clone.style.marginRight = 'auto';
+      clone.style.margin = '0';
+      clone.style.marginLeft = '0';
+      clone.style.marginRight = '0';
       clone.style.marginBottom = '0';
       clone.style.boxShadow = 'none';
       clone.style.border = 'none';
       clone.style.borderRadius = '0';
       clone.style.outline = 'none';
       clone.style.width = '794px';
+      clone.style.minWidth = '794px';
+      clone.style.maxWidth = '794px';
+      clone.style.boxSizing = 'border-box';
       clone.style.transition = 'none';
 
       const isSinglePage = sheet.scrollHeight <= 1180;
@@ -2526,7 +2596,10 @@ www.autonoma.pe`;
           logging: false,
           scrollY: 0,
           scrollX: 0,
-          windowWidth: 800
+          x: 0,
+          y: 0,
+          width: 794,
+          windowWidth: 820
         },
         jsPDF: {
           unit: 'mm',
