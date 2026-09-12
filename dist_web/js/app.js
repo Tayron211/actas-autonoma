@@ -122,12 +122,12 @@ document.addEventListener('DOMContentLoaded', () => {
   // GESTIÓN DE SESIÓN Y AUTENTICACIÓN DE USUARIOS DTI
   // ============================================================
   const AUTH_USERS = {
-    'cristian': { username: 'Cristian', pass: 'Joel0209', role: 'Operador DTI', avatar: '👨‍💻' },
-    'tayron':   { username: 'Tayron',   pass: '210391',   role: 'Administrador DTI', avatar: '👨‍💼' },
-    'david':    { username: 'David',    pass: 'Goñigo',   role: 'Operador DTI', avatar: '👨‍🔧' },
-    'bruno':    { username: 'Bruno',    pass: 'Jonas',    role: 'Operador DTI', avatar: '👨‍💻' },
-    'raul':     { username: 'Raul',     pass: 'Raulito',  role: 'Operador DTI', avatar: '👨‍💻' },
-    'raúl':     { username: 'Raul',     pass: 'Raulito',  role: 'Operador DTI', avatar: '👨‍💻' }
+    'cristian': { username: 'Cristian', pass: 'Joel0209', role: 'Operador DTI', isAdmin: false, avatar: '👨‍💻' },
+    'tayron':   { username: 'Tayron',   pass: '210391',   role: 'Administrador DTI', isAdmin: true, avatar: '👨‍💼' },
+    'david':    { username: 'David',    pass: 'Goñigo',   role: 'Operador DTI', isAdmin: false, avatar: '👨‍🔧' },
+    'bruno':    { username: 'Bruno',    pass: 'Jonas',    role: 'Operador DTI', isAdmin: false, avatar: '👨‍💻' },
+    'raul':     { username: 'Raul',     pass: 'Raulito',  role: 'Operador DTI', isAdmin: false, avatar: '👨‍💻' },
+    'raúl':     { username: 'Raul',     pass: 'Raulito',  role: 'Operador DTI', isAdmin: false, avatar: '👨‍💻' }
   };
   const AUTH_STORAGE_KEY = 'ua_actas_auth_session';
 
@@ -297,6 +297,11 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (e) {}
       this.showLoginModal();
       showToast('Has cerrado sesión correctamente.', 'info', 3000);
+    },
+
+    isAdmin() {
+      if (!this.currentUser) return false;
+      return !!(this.currentUser.isAdmin || this.currentUser.role === 'Administrador DTI' || (this.currentUser.username || '').toLowerCase() === 'tayron');
     },
 
     getCurrentUser() {
@@ -3930,6 +3935,10 @@ www.autonoma.pe`;
     },
 
     async deleteActa(id) {
+      if (typeof AuthManager !== 'undefined' && !AuthManager.isAdmin()) {
+        alert('Acceso denegado: Solo el Administrador DTI tiene autorización para eliminar actas del historial.');
+        throw new Error('No autorizado para eliminar actas');
+      }
       this.actas = this.actas.filter(a => a.id !== id);
       try {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.actas));
@@ -4026,6 +4035,7 @@ www.autonoma.pe`;
     const statsEl = document.getElementById('historyStats');
     const listEl = document.getElementById('historyCardsList');
     const searchVal = (document.getElementById('historySearchInput')?.value || '').toLowerCase().trim();
+    const isAdmin = (typeof AuthManager !== 'undefined' && AuthManager.isAdmin) ? AuthManager.isAdmin() : false;
 
     if (!listEl) return;
 
@@ -4115,17 +4125,23 @@ www.autonoma.pe`;
               ` : ''}
             </div>
 
-            <button type="button" class="btn btn-outline-secondary btn-sm btn-delete-acta" data-id="${acta.id}" style="padding:2px 6px; font-size:0.72rem; color:#EF4444; border-color:#FECACA;" title="Eliminar del historial">
-              🗑️
-            </button>
+            ${isAdmin ? `
+              <button type="button" class="btn btn-outline-secondary btn-sm btn-delete-acta" data-id="${acta.id}" style="padding:2px 6px; font-size:0.72rem; color:#EF4444; border-color:#FECACA;" title="Eliminar del historial (Solo Administrador)">
+                🗑️
+              </button>
+            ` : ''}
           </div>
         </div>
       `;
     }).join('');
 
-    // Listeners para eliminar acta
+    // Listeners para eliminar acta (Solo Administrador)
     listEl.querySelectorAll('.btn-delete-acta').forEach(btn => {
       btn.addEventListener('click', async (e) => {
+        if (typeof AuthManager !== 'undefined' && !AuthManager.isAdmin()) {
+          alert('Acceso restringido: Solo el Administrador DTI puede eliminar actas del historial.');
+          return;
+        }
         const id = btn.getAttribute('data-id');
         if (await customConfirm('¿Deseas eliminar este registro del historial en la nube?')) {
           try {
