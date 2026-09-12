@@ -118,7 +118,187 @@ document.addEventListener('DOMContentLoaded', () => {
   let sigPadRecibe = null;
   let sigPadModal = null;
 
+  // ============================================================
+  // GESTIÓN DE SESIÓN Y AUTENTICACIÓN DE USUARIOS DTI
+  // ============================================================
+  const AUTH_USERS = {
+    'cristian': { username: 'Cristian', pass: 'Joel0209', role: 'Operador DTI', avatar: '👨‍💻' },
+    'tayron':   { username: 'Tayron',   pass: '210391',   role: 'Administrador DTI', avatar: '👨‍💼' },
+    'david':    { username: 'David',    pass: 'Goñigo',   role: 'Operador DTI', avatar: '👨‍🔧' },
+    'bruno':    { username: 'Bruno',    pass: 'Jonas',    role: 'Operador DTI', avatar: '👨‍💻' }
+  };
+  const AUTH_STORAGE_KEY = 'ua_actas_auth_session';
+
+  const AuthManager = {
+    currentUser: null,
+
+    init() {
+      this.bindEvents();
+      this.checkSession();
+    },
+
+    bindEvents() {
+      const form = document.getElementById('loginForm');
+      const userInput = document.getElementById('loginUserSelect');
+      const passInput = document.getElementById('loginPasswordInput');
+      const toggleBtn = document.getElementById('btnTogglePassword');
+      const logoutBtn = document.getElementById('btnLogoutUser');
+      const modal = document.getElementById('loginModal');
+
+      if (toggleBtn && passInput) {
+        toggleBtn.addEventListener('click', () => {
+          if (passInput.type === 'password') {
+            passInput.type = 'text';
+            toggleBtn.textContent = '🙈';
+          } else {
+            passInput.type = 'password';
+            toggleBtn.textContent = '👁️';
+          }
+        });
+      }
+
+      if (form) {
+        form.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const userVal = (userInput ? userInput.value : '').trim();
+          const passVal = (passInput ? passInput.value : '').trim();
+          this.attemptLogin(userVal, passVal);
+        });
+      }
+
+      if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+          if (await customConfirm('¿Deseas cerrar tu sesión actual en el sistema?')) {
+            this.logout();
+          }
+        });
+      }
+
+      if (modal) {
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal && !this.currentUser) {
+            e.stopPropagation();
+          }
+        });
+      }
+    },
+
+    checkSession() {
+      try {
+        const stored = localStorage.getItem(AUTH_STORAGE_KEY);
+        if (stored) {
+          const userObj = JSON.parse(stored);
+          const key = (userObj.username || '').toLowerCase().trim();
+          if (AUTH_USERS[key]) {
+            this.currentUser = AUTH_USERS[key];
+            this.showAuthenticatedState();
+            return;
+          }
+        }
+      } catch (e) {}
+
+      this.currentUser = null;
+      this.showLoginModal();
+    },
+
+    attemptLogin(userVal, passVal) {
+      const errorEl = document.getElementById('loginErrorMessage');
+      if (errorEl) errorEl.style.display = 'none';
+
+      if (!userVal) {
+        this.showError('Por favor selecciona tu usuario institucional.');
+        return;
+      }
+      if (!passVal) {
+        this.showError('Por favor ingresa tu contraseña.');
+        return;
+      }
+
+      const key = userVal.toLowerCase().trim();
+      const matched = AUTH_USERS[key];
+
+      if (!matched || matched.pass !== passVal) {
+        this.showError('Contraseña incorrecta. Verifica e intenta nuevamente.');
+        return;
+      }
+
+      this.currentUser = matched;
+      try {
+        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({
+          username: matched.username,
+          role: matched.role,
+          avatar: matched.avatar,
+          loginAt: new Date().toISOString()
+        }));
+      } catch (e) {}
+
+      this.hideLoginModal();
+      this.showAuthenticatedState();
+
+      const passInput = document.getElementById('loginPasswordInput');
+      if (passInput) passInput.value = '';
+
+      showToast(`¡Bienvenido, ${matched.username}!`, 'success', 3500);
+    },
+
+    showError(msg) {
+      const errorEl = document.getElementById('loginErrorMessage');
+      if (errorEl) {
+        errorEl.textContent = msg;
+        errorEl.style.display = 'block';
+      } else {
+        alert(msg);
+      }
+    },
+
+    showLoginModal() {
+      const modal = document.getElementById('loginModal');
+      const badge = document.getElementById('userHeaderBadge');
+      if (badge) badge.style.display = 'none';
+      if (modal) {
+        modal.classList.remove('is-closing');
+        modal.classList.add('active');
+      }
+      const passInput = document.getElementById('loginPasswordInput');
+      if (passInput) passInput.value = '';
+      const err = document.getElementById('loginErrorMessage');
+      if (err) err.style.display = 'none';
+    },
+
+    hideLoginModal() {
+      const modal = document.getElementById('loginModal');
+      if (modal) {
+        modal.classList.remove('active');
+      }
+    },
+
+    showAuthenticatedState() {
+      const badge = document.getElementById('userHeaderBadge');
+      const avatarEl = document.getElementById('userAvatarHeader');
+      const nameEl = document.getElementById('userNameHeader');
+      if (this.currentUser) {
+        if (avatarEl) avatarEl.textContent = this.currentUser.avatar || '👨‍💻';
+        if (nameEl) nameEl.textContent = this.currentUser.username;
+        if (badge) badge.style.display = 'inline-flex';
+      }
+    },
+
+    logout() {
+      this.currentUser = null;
+      try {
+        localStorage.removeItem(AUTH_STORAGE_KEY);
+      } catch (e) {}
+      this.showLoginModal();
+      showToast('Has cerrado sesión correctamente.', 'info', 3000);
+    },
+
+    getCurrentUser() {
+      return this.currentUser;
+    }
+  };
+
   function initApp() {
+    AuthManager.init();
     setupDateDefaults();
     initSignaturePads();
     initModalSignature();
@@ -3673,12 +3853,20 @@ www.autonoma.pe`;
     async saveActa(acta) {
       const id = acta.id || `ACTA-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       const now = new Date().toISOString();
+      const currentUser = (typeof AuthManager !== 'undefined' && AuthManager.getCurrentUser) ? AuthManager.getCurrentUser() : null;
+      const defaultUser = currentUser ? currentUser.username : 'Sistema';
+
       const newActa = {
         id,
         createdAt: acta.createdAt || now,
         updatedAt: now,
+        creadoPor: acta.creadoPor || defaultUser,
         ...acta
       };
+
+      if (!newActa.creadoPor) {
+        newActa.creadoPor = defaultUser;
+      }
 
       if (!newActa.colaborador || newActa.colaborador.trim() === '' || newActa.colaborador === 'Colaborador') {
         newActa.colaborador = newActa.colabEmail ? newActa.colabEmail.split('@')[0] : 'Colaborador';
@@ -3848,7 +4036,8 @@ www.autonoma.pe`;
         const dni = (a.colabDni || '').toLowerCase();
         const rep = (a.representante || '').toLowerCase();
         const fname = (a.filename || '').toLowerCase();
-        return colab.includes(searchVal) || dni.includes(searchVal) || rep.includes(searchVal) || fname.includes(searchVal);
+        const creador = (a.creadoPor || '').toLowerCase();
+        return colab.includes(searchVal) || dni.includes(searchVal) || rep.includes(searchVal) || fname.includes(searchVal) || creador.includes(searchVal);
       });
     }
 
@@ -3881,11 +4070,14 @@ www.autonoma.pe`;
       return `
         <div class="history-item-card" style="background:#FFFFFF; border:1px solid #E2E8F0; border-radius:var(--radius-md); padding:0.85rem 1rem; box-shadow:0 1px 3px rgba(0,0,0,0.04); transition:all 0.15s ease;">
           <div style="display:flex; justify-content:space-between; align-items:flex-start; gap:0.5rem; flex-wrap:wrap; margin-bottom:0.4rem;">
-            <div style="display:flex; align-items:center; gap:0.5rem;">
+            <div style="display:flex; align-items:center; gap:0.5rem; flex-wrap:wrap;">
               <span style="background:${badgeBg}; color:${badgeColor}; border:1px solid ${badgeBorder}; font-size:0.7rem; font-weight:800; padding:2px 8px; border-radius:4px; font-family:var(--font-brand);">
                 ${tipoLabel}
               </span>
               <strong style="font-size:0.88rem; color:#0F172A;">${escapeHtml(colabName)}</strong>
+              <span style="display:inline-flex; align-items:center; gap:3px; background:#F8FAFC; color:#334155; font-size:0.72rem; font-weight:700; padding:2px 8px; border-radius:12px; border:1px solid #CBD5E1;" title="Operador que emitió el acta">
+                <span style="color:#EA580C;">👤</span> Enviado por: <strong style="color:#0F172A;">${escapeHtml(acta.creadoPor || 'Sistema')}</strong>
+              </span>
             </div>
             <span style="font-size:0.72rem; color:#94A3B8;">${escapeHtml(dateFormatted)}</span>
           </div>

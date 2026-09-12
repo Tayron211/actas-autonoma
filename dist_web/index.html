@@ -98,6 +98,17 @@
       </div>
 
       <div class="header-actions">
+        <!-- Indicador de Usuario Autenticado DTI -->
+        <div id="userHeaderBadge" class="user-header-badge" style="display: none; align-items: center; gap: 0.45rem; background: #FFF7ED; border: 1px solid #FED7AA; padding: 0.25rem 0.65rem; border-radius: 20px; font-size: 0.78rem;">
+          <span id="userAvatarHeader" style="font-size: 0.95rem;">👨‍💻</span>
+          <span id="userNameHeader" style="font-weight: 800; color: #9A3412;">Usuario</span>
+          <span style="color: #FED7AA;">|</span>
+          <button type="button" id="btnLogoutUser" class="btn-logout-header" title="Cerrar sesión" style="background: transparent; border: none; color: #DC2626; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 2px; font-size: 0.75rem; padding: 0;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+            <span>Salir</span>
+          </button>
+        </div>
+
         <button type="button" id="btnInstallPwa" class="btn btn-secondary btn-sm" title="Acceso Móvil e Instalación de la App" style="background:#FFF7ED; border-color:#FED7AA; color:#C2410C; font-weight:700;">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect>
@@ -988,6 +999,58 @@
       <div style="display: flex; gap: 0.6rem; justify-content: flex-end;">
         <button type="button" id="btnCustomAlertCancel" class="btn btn-secondary" style="display: none; flex: 1; justify-content: center; padding: 0.75rem; font-size: 0.92rem; font-weight: 600;">Cancelar</button>
         <button type="button" id="btnCustomAlertOk" class="btn btn-primary" style="flex: 1; justify-content: center; padding: 0.75rem; font-size: 0.92rem; font-weight: 700;">Entendido</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       MODAL DE INICIO DE SESIÓN OFICIAL: ACTAS AUTÓNOMA (DTI)
+       ============================================================ -->
+  <div id="loginModal" class="modal-overlay" style="z-index: 999999; backdrop-filter: blur(10px); background: rgba(15, 23, 42, 0.88);">
+    <div class="modal-card" style="max-width: 420px; width: 92%; padding: 2rem 1.75rem; border-top: 5px solid #EA580C; border-radius: 20px; margin: auto; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.45); background: #FFFFFF;">
+      <div style="text-align: center; margin-bottom: 1.5rem;">
+        <img src="brand/Logo/Logo-Color.png" alt="Universidad Autónoma del Perú" style="height: 48px; max-width: 100%; object-fit: contain; margin-bottom: 0.75rem; display: block; margin-left: auto; margin-right: auto;">
+        <h2 style="margin: 0 0 0.25rem 0; font-size: 1.22rem; color: #0F172A; font-family: var(--font-brand); font-weight: 800; letter-spacing: -0.02em;">Acceso DTI — Gestión de Actas</h2>
+        <p style="margin: 0; font-size: 0.8rem; color: #64748B;">Identifícate para emitir y administrar actas oficiales</p>
+      </div>
+
+      <form id="loginForm" autocomplete="off">
+        <!-- Selector de Usuario -->
+        <div style="margin-bottom: 1.1rem; text-align: left;">
+          <label for="loginUserSelect" style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 0.45rem;">
+            👤 Usuario / Operador:
+          </label>
+          <select id="loginUserSelect" class="form-control" required style="width: 100%; padding: 0.65rem 0.85rem; font-size: 0.92rem; border-radius: 10px; border: 1.5px solid #CBD5E1; background: #FFFFFF; font-weight: 600; color: #0F172A;">
+            <option value="" disabled selected>-- Selecciona tu usuario --</option>
+            <option value="Cristian">👨‍💻 Cristian (Operador DTI)</option>
+            <option value="Tayron">👨‍💼 Tayron (Administrador DTI)</option>
+            <option value="David">👨‍🔧 David (Operador DTI)</option>
+            <option value="Bruno">👨‍💻 Bruno (Operador DTI)</option>
+          </select>
+        </div>
+
+        <!-- Campo de Contraseña -->
+        <div style="margin-bottom: 1.25rem; text-align: left;">
+          <label for="loginPasswordInput" style="display: block; font-size: 0.82rem; font-weight: 700; color: #334155; margin-bottom: 0.45rem;">
+            🔒 Contraseña:
+          </label>
+          <div style="position: relative;">
+            <input type="password" id="loginPasswordInput" class="form-control" placeholder="Ingresa tu contraseña" required style="width: 100%; padding: 0.65rem 2.5rem 0.65rem 0.85rem; font-size: 0.92rem; border-radius: 10px; border: 1.5px solid #CBD5E1; background: #FFFFFF;">
+            <button type="button" id="btnTogglePassword" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: transparent; border: none; cursor: pointer; font-size: 1rem; color: #64748B; padding: 2px;" title="Mostrar / Ocultar contraseña">👁️</button>
+          </div>
+        </div>
+
+        <!-- Mensaje de Error -->
+        <div id="loginErrorMessage" style="display: none; background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; padding: 0.65rem 0.85rem; border-radius: 8px; font-size: 0.82rem; margin-bottom: 1.1rem; font-weight: 600; text-align: center;"></div>
+
+        <!-- Botón de Ingreso -->
+        <button type="submit" id="btnSubmitLogin" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 0.8rem; font-size: 0.98rem; font-weight: 800; border-radius: 10px; box-shadow: 0 4px 14px rgba(234, 88, 12, 0.35); letter-spacing: 0.01em;">
+          <span>Iniciar Sesión</span>
+        </button>
+      </form>
+
+      <div style="margin-top: 1.25rem; text-align: center; border-top: 1px solid #F1F5F9; padding-top: 0.85rem;">
+        <span style="font-size: 0.72rem; color: #94A3B8; font-weight: 500;">Universidad Autónoma del Perú &bull; DTI</span>
       </div>
     </div>
   </div>
