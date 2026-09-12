@@ -217,16 +217,69 @@ function doPost(e) {
     }
 
     // ------------------------------------------------------------
-    // ACCIÓN 3: ELIMINAR ACTA DE HISTORIAL (DELETE ACTA)
+    // ACCIÓN 3: ELIMINAR ACTA DE HISTORIAL Y ARCHIVO DE GOOGLE DRIVE
     // ------------------------------------------------------------
     if (data.action === "delete_acta") {
       var targetId = data.id || "";
       var actasList = loadActasFromDb(rootFolder);
+      var targetActa = null;
+      for (var i = 0; i < actasList.length; i++) {
+        if (actasList[i].id === targetId) {
+          targetActa = actasList[i];
+          break;
+        }
+      }
       actasList = actasList.filter(function(a) { return a.id !== targetId; });
       saveActasToDb(rootFolder, actasList);
+
+      // Borrar archivo correspondiente en Google Drive
+      var deletedFromDrive = false;
+      try {
+        var filename = (data.filename || (targetActa && targetActa.filename) || "").replace(/\.html$/i, ".pdf");
+        var driveUrl = data.driveUrl || (targetActa && targetActa.driveUrl) || "";
+        var fileId = data.fileId || (targetActa && targetActa.fileId) || "";
+
+        if (!fileId && driveUrl) {
+          var matchId = driveUrl.match(/\/file\/d\/([a-zA-Z0-9_-]+)/) || driveUrl.match(/id=([a-zA-Z0-9_-]+)/);
+          if (matchId && matchId[1]) {
+            fileId = matchId[1];
+          }
+        }
+
+        // 1. Borrar por fileId si está disponible
+        if (fileId) {
+          try {
+            var targetFile = DriveApp.getFileById(fileId);
+            if (targetFile) {
+              targetFile.setTrashed(true);
+              deletedFromDrive = true;
+            }
+          } catch(eFile) {
+            console.warn("Aviso al mover archivo a la papelera por ID:", eFile);
+          }
+        }
+
+        // 2. Si no se borró por ID, buscar por nombre exacto dentro del repositorio
+        if (!deletedFromDrive && filename) {
+          try {
+            var searchFiles = rootFolder.searchFiles("title = '" + filename.replace(/'/g, "\\'") + "' and trashed = false");
+            while (searchFiles.hasNext()) {
+              var sFile = searchFiles.next();
+              sFile.setTrashed(true);
+              deletedFromDrive = true;
+            }
+          } catch(eSearch) {
+            console.warn("Aviso en búsqueda de archivo para eliminar:", eSearch);
+          }
+        }
+      } catch (errDriveDel) {
+        console.warn("Error al eliminar archivo de Drive:", errDriveDel);
+      }
+
       return ContentService.createTextOutput(JSON.stringify({
         status: "success",
-        message: "Acta eliminada del historial en la nube",
+        message: deletedFromDrive ? "Acta y archivo de Google Drive eliminados correctamente" : "Acta eliminada del historial en la nube",
+        deletedFromDrive: deletedFromDrive,
         count: actasList.length,
         actas: actasList
       })).setMimeType(ContentService.MimeType.JSON);

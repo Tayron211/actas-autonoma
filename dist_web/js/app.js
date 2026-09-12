@@ -3939,6 +3939,7 @@ www.autonoma.pe`;
         alert('Acceso denegado: Solo el Administrador DTI tiene autorización para eliminar actas del historial.');
         throw new Error('No autorizado para eliminar actas');
       }
+      const targetActa = this.actas.find(a => a.id === id);
       this.actas = this.actas.filter(a => a.id !== id);
       try {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.actas));
@@ -3951,11 +3952,18 @@ www.autonoma.pe`;
       if (gasUrl) {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 6000);
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
           await fetch(gasUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'delete_acta', id: id }),
+            body: JSON.stringify({
+              action: 'delete_acta',
+              id: id,
+              filename: targetActa ? targetActa.filename : '',
+              driveUrl: targetActa ? targetActa.driveUrl : '',
+              fileId: targetActa ? targetActa.fileId : '',
+              tipo: targetActa ? targetActa.tipoActa : ''
+            }),
             signal: controller.signal
           });
           clearTimeout(timeoutId);
@@ -3966,7 +3974,10 @@ www.autonoma.pe`;
         await fetch('/api/actas', {
           method: 'DELETE',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id })
+          body: JSON.stringify({
+            id: id,
+            filename: targetActa ? targetActa.filename : ''
+          })
         });
       } catch(e) {}
 
@@ -4143,11 +4154,14 @@ www.autonoma.pe`;
           return;
         }
         const id = btn.getAttribute('data-id');
-        if (await customConfirm('¿Deseas eliminar este registro del historial en la nube?')) {
+        if (await customConfirm('¿Deseas eliminar este registro del historial y borrar permanentemente su archivo en Google Drive?')) {
           try {
             await CloudDatabaseManager.deleteActa(id);
             cachedHistoryActas = CloudDatabaseManager.getActas();
             renderHistoryList();
+            if (typeof showToast === 'function') {
+              showToast('Acta y archivo de Google Drive eliminados con éxito.', 'success', 3500);
+            }
           } catch (err) {
             alert('No se pudo eliminar el registro.');
           }

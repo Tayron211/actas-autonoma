@@ -224,6 +224,13 @@ function startServer(port) {
           const data = JSON.parse(body || '{}');
           const id = data.id;
           let list = getStoredActas();
+          const target = list.find(a => a.id === id);
+          if (target && target.localPath) {
+            try {
+              const fullLocal = path.join(__dirname, target.localPath.replace(/^\//, ''));
+              if (fs.existsSync(fullLocal)) fs.unlinkSync(fullLocal);
+            } catch (errLocal) {}
+          }
           list = list.filter(a => a.id !== id);
           saveStoredActas(list);
           res.writeHead(200, { 'Content-Type': 'application/json; charset=UTF-8' });
