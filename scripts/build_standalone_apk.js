@@ -273,7 +273,11 @@ public class MainActivity extends Activity {
                             String jobName = (filename != null && !filename.isEmpty()) ? filename : ("Acta_" + System.currentTimeMillis());
                             if (jobName.endsWith(".pdf")) jobName = jobName.substring(0, jobName.length() - 4);
                             PrintDocumentAdapter adapter = new PdfPrintAdapter(tempFile);
-                            printManager.print(jobName, adapter, new PrintAttributes.Builder().build());
+                            PrintAttributes attributes = new PrintAttributes.Builder()
+                                    .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
+                                    .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
+                                    .build();
+                            printManager.print(jobName, adapter, attributes);
                         }
                     } catch (Exception e) {
                         e.printStackTrace();
@@ -293,7 +297,11 @@ public class MainActivity extends Activity {
                         if (printManager != null && webView != null) {
                             String jobName = "Acta_Oficial_Autonoma_" + System.currentTimeMillis();
                             PrintDocumentAdapter printAdapter = webView.createPrintDocumentAdapter(jobName);
-                            printManager.print(jobName, printAdapter, new PrintAttributes.Builder().build());
+                            PrintAttributes attributes = new PrintAttributes.Builder()
+                                    .setMediaSize(PrintAttributes.MediaSize.ISO_A4)
+                                    .setMinMargins(PrintAttributes.Margins.NO_MARGINS)
+                                    .build();
+                            printManager.print(jobName, printAdapter, attributes);
                         }
                     } catch (Exception e) {
                         e.printStackTrace();

@@ -1149,9 +1149,9 @@ body {
   width: 100% !important;
   max-width: 100% !important;
   border-collapse: collapse !important;
-  table-layout: auto !important; /* Adaptable automáticamente al contenido tipo Excel */
+  table-layout: fixed !important;
   box-sizing: border-box !important;
-  margin: 10px 0 14px 0 !important;
+  margin: 10px auto 14px auto !important;
 }
 
 .doc-table th,
@@ -1179,9 +1179,9 @@ body {
   background-color: #F8FAFC !important;
 }
 
-/* Celdas inteligentes tipo Excel: ancho mínimo exacto para códigos/números, resto a descripción */
+/* Celdas proporcionales para abarcar el 100% del ancho perfectamente centrado */
 .doc-table .col-num {
-  width: 1% !important;
+  width: 6% !important;
   white-space: nowrap !important;
   font-weight: 700 !important;
   color: #475569 !important;
@@ -1189,7 +1189,7 @@ body {
 }
 
 .doc-table .col-etiq {
-  width: 1% !important;
+  width: 18% !important;
   white-space: nowrap !important;
   font-weight: 700 !important;
   color: #0F172A !important;
@@ -1198,21 +1198,36 @@ body {
 }
 
 .doc-table .col-desc {
+  width: 30% !important;
   text-align: center !important;
   word-break: normal !important;
   overflow-wrap: break-word !important;
 }
 
-.doc-table .col-marca,
-.doc-table .col-modelo,
+.doc-table .col-marca {
+  width: 12% !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+}
+
+.doc-table .col-modelo {
+  width: 12% !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+}
+
 .doc-table .col-serie {
-  width: 1% !important;
+  width: 12% !important;
   white-space: nowrap !important;
   text-align: center !important;
 }
 
 .doc-table .col-estado {
-  width: 1% !important;
+  width: 10% !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+  font-weight: 700 !important;
+}
   white-space: nowrap !important;
   text-align: center !important;
   font-weight: 700 !important;
@@ -2408,7 +2423,7 @@ body {
   }
 
   .doc-table .col-num {
-    width: 1% !important;
+    width: 6% !important;
     white-space: nowrap !important;
     font-weight: 700 !important;
     color: #475569 !important;
@@ -2416,27 +2431,41 @@ body {
   }
 
   .doc-table .col-etiq {
-    width: 1% !important;
+    width: 18% !important;
     white-space: nowrap !important;
     font-weight: 700 !important;
     color: #0F172A !important;
     text-align: center !important;
+    font-family: monospace, var(--font-brand) !important;
   }
 
   .doc-table .col-desc {
+    width: 30% !important;
+    text-align: center !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+  }
+
+  .doc-table .col-marca {
+    width: 12% !important;
+    white-space: nowrap !important;
     text-align: center !important;
   }
 
-  .doc-table .col-marca,
-  .doc-table .col-modelo,
+  .doc-table .col-modelo {
+    width: 12% !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+  }
+
   .doc-table .col-serie {
-    width: 1% !important;
+    width: 12% !important;
     white-space: nowrap !important;
     text-align: center !important;
   }
 
   .doc-table .col-estado {
-    width: 1% !important;
+    width: 10% !important;
     white-space: nowrap !important;
     text-align: center !important;
     font-weight: 700 !important;

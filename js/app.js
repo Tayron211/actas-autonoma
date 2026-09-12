@@ -2500,14 +2500,14 @@ www.autonoma.pe`;
     sheet.style.marginBottom = '0';
     sheet.style.width = '794px';
 
-    // Crear un iframe aislado con resolución estándar de escritorio (800px)
+    // Crear un iframe aislado con resolución estándar de escritorio A4 (794px)
     const iframe = document.createElement('iframe');
     iframe.id = 'pdfIsolatedRenderFrame';
     iframe.style.position = 'fixed';
     iframe.style.left = '-9999px';
     iframe.style.top = '0';
-    iframe.style.width = '800px';
-    iframe.style.height = '1250px';
+    iframe.style.width = '794px';
+    iframe.style.height = '1125px';
     iframe.style.border = 'none';
     iframe.style.visibility = 'hidden';
     iframe.style.pointerEvents = 'none';
@@ -2533,14 +2533,14 @@ www.autonoma.pe`;
           padding: 0 !important;
           background: #FFFFFF !important;
           overflow: hidden !important;
-          width: 800px !important;
+          width: 794px !important;
+          min-width: 794px !important;
+          max-width: 794px !important;
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
         .a4-sheet {
-          margin: 0 !important;
-          margin-left: 0 !important;
-          margin-right: 0 !important;
+          margin: 0 auto !important;
           transform: none !important;
           box-shadow: none !important;
           border: none !important;
@@ -2569,9 +2569,9 @@ www.autonoma.pe`;
 
       clone.id = 'officialDocumentSheetPdfClone';
       clone.style.transform = 'none';
-      clone.style.margin = '0';
-      clone.style.marginLeft = '0';
-      clone.style.marginRight = '0';
+      clone.style.margin = '0 auto';
+      clone.style.marginLeft = 'auto';
+      clone.style.marginRight = 'auto';
       clone.style.marginBottom = '0';
       clone.style.boxShadow = 'none';
       clone.style.border = 'none';
@@ -2620,7 +2620,7 @@ www.autonoma.pe`;
           x: 0,
           y: 0,
           width: 794,
-          windowWidth: 820
+          windowWidth: 794
         },
         jsPDF: {
           unit: 'mm',
