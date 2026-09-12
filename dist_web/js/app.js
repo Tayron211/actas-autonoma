@@ -491,7 +491,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btnInstallModalClose')?.addEventListener('click', closeInstallModal);
     document.getElementById('btnTriggerInstallPrompt')?.addEventListener('click', handleTriggerInstall);
     document.getElementById('btnDownloadApkModal')?.addEventListener('click', (e) => {
-      const apkUrl = 'https://files.catbox.moe/sflpa7.apk';
+      const apkUrl = 'https://spoo.me/actas-apk-ua';
       if (window.AndroidBridge && typeof window.AndroidBridge.downloadApkDirect === 'function') {
         e.preventDefault();
         window.AndroidBridge.downloadApkDirect();
@@ -3365,12 +3365,16 @@ www.autonoma.pe`;
     const inputEl = document.getElementById('publicWebUrlDisplay');
     const qrEl = document.getElementById('publicWebQrCode');
     const webUrlInput = document.getElementById('publicWebDirectInput');
+    const btnDownload = document.getElementById('btnDownloadApkModal');
+    const qrAnchor = qrEl ? qrEl.closest('a') : null;
 
-    const apkDownloadUrl = 'https://spoo.me/apptas';
-    const shortWeb = 'https://spoo.me/actas26';
+    const apkDownloadUrl = 'https://spoo.me/actas-apk-ua';
+    const shortWeb = 'https://spoo.me/actas-web-ua';
 
     if (inputEl) inputEl.value = apkDownloadUrl;
     if (webUrlInput) webUrlInput.value = shortWeb;
+    if (btnDownload) btnDownload.href = apkDownloadUrl;
+    if (qrAnchor) qrAnchor.href = apkDownloadUrl;
     if (qrEl) {
       qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&margin=6&data=${encodeURIComponent(apkDownloadUrl)}`;
     }
@@ -3392,7 +3396,7 @@ www.autonoma.pe`;
 
   async function copyPublicWebUrl() {
     const inputEl = document.getElementById('publicWebUrlDisplay');
-    const url = inputEl ? inputEl.value : 'https://spoo.me/apptas';
+    const url = inputEl ? inputEl.value : 'https://spoo.me/actas-apk-ua';
     if (navigator.clipboard && navigator.clipboard.writeText) {
       await navigator.clipboard.writeText(url);
       showToast('¡Enlace de descarga de la App copiado!', 'success');

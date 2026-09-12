@@ -459,7 +459,7 @@ public class MainActivity extends Activity {
                         @Override
                         public void run() {
                             try {
-                                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://spoo.me/apptasfinal"));
+                                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://spoo.me/actas-apk-ua"));
                                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                                 startActivity(intent);
                             } catch (Exception ex) {}
