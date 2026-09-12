@@ -125,7 +125,9 @@ document.addEventListener('DOMContentLoaded', () => {
     'cristian': { username: 'Cristian', pass: 'Joel0209', role: 'Operador DTI', avatar: '👨‍💻' },
     'tayron':   { username: 'Tayron',   pass: '210391',   role: 'Administrador DTI', avatar: '👨‍💼' },
     'david':    { username: 'David',    pass: 'Goñigo',   role: 'Operador DTI', avatar: '👨‍🔧' },
-    'bruno':    { username: 'Bruno',    pass: 'Jonas',    role: 'Operador DTI', avatar: '👨‍💻' }
+    'bruno':    { username: 'Bruno',    pass: 'Jonas',    role: 'Operador DTI', avatar: '👨‍💻' },
+    'raul':     { username: 'Raul',     pass: 'Raulito',  role: 'Operador DTI', avatar: '👨‍💻' },
+    'raúl':     { username: 'Raul',     pass: 'Raulito',  role: 'Operador DTI', avatar: '👨‍💻' }
   };
   const AUTH_STORAGE_KEY = 'ua_actas_auth_session';
 
