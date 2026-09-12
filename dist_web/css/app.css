@@ -2197,80 +2197,35 @@ body {
 }
 
 /* ----------------------------------------------------------
+/* ----------------------------------------------------------
    IMPRESIÓN OFICIAL (@media print y .is-printing)
-   Elimina páginas en blanco y garantiza hoja A4 limpia
+   100% IDÉNTICO AL MODELO OFICIAL ENVIADO POR CORREO
    ---------------------------------------------------------- */
-body.is-printing {
-  padding: 0 !important;
-  margin: 0 !important;
-  min-height: 0 !important;
-  height: auto !important;
-  display: block !important;
-  overflow: visible !important;
-  background: #FFFFFF !important;
+@page {
+  size: A4 portrait;
+  margin: 0 !important; /* Elimina encabezados y pies de página automáticos del navegador (fecha, hora, URL) */
 }
 
-body.is-printing .app-header,
-body.is-printing .mobile-view-tabs,
-body.is-printing .mobile-bottom-nav,
-body.is-printing .form-panel,
-body.is-printing .preview-toolbar,
-body.is-printing .modal-overlay,
-body.is-printing .toast-container,
-body.is-printing .btn,
-body.is-printing .no-print,
-body.is-printing #toastNotification,
-body.is-printing header,
-body.is-printing nav {
-  display: none !important;
-  height: 0 !important;
-  min-height: 0 !important;
-  max-height: 0 !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  border: none !important;
-  overflow: hidden !important;
-}
-
-body.is-printing .main-wrapper,
-body.is-printing .preview-panel,
-body.is-printing .document-container {
-  display: block !important;
-  width: 100% !important;
-  max-width: none !important;
-  margin: 0 !important;
-  padding: 0 !important;
-  gap: 0 !important;
-  height: auto !important;
-  min-height: 0 !important;
-  border: none !important;
-  box-shadow: none !important;
-  overflow: visible !important;
-}
-
+body.is-printing,
 @media print {
-  @page {
-    size: A4 portrait;
-    margin: 10mm 14mm 10mm 14mm;
-  }
-
   html, body {
-    width: 100% !important;
-    max-width: 100% !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
-    margin: 0 !important;
+    width: 210mm !important;
+    height: 297mm !important;
+    max-width: 210mm !important;
+    max-height: 297mm !important;
+    min-height: 297mm !important;
+    margin: 0 auto !important;
     padding: 0 !important;
-    overflow: visible !important;
+    overflow: hidden !important;
     display: block !important;
     background: #FFFFFF !important;
-    color: #000000 !important;
-    font-size: 10pt;
+    color: #1A1A1A !important;
+    font-family: var(--font-doc) !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
+  /* Ocultar elementos de la interfaz de la aplicación, NUNCA el encabezado oficial del documento */
   .app-header,
   .mobile-view-tabs,
   .mobile-bottom-nav,
@@ -2281,9 +2236,10 @@ body.is-printing .document-container {
   .btn,
   .no-print,
   #toastNotification,
-  header,
-  nav {
+  .app-bottom-bar,
+  nav.mobile-bottom-nav {
     display: none !important;
+    visibility: hidden !important;
     height: 0 !important;
     min-height: 0 !important;
     max-height: 0 !important;
@@ -2293,135 +2249,301 @@ body.is-printing .document-container {
     overflow: hidden !important;
   }
 
-  .main-wrapper {
-    display: block !important;
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    gap: 0 !important;
-    height: auto !important;
-    min-height: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-
-  .preview-panel {
-    display: block !important;
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    height: auto !important;
-    min-height: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-  }
-
+  .main-wrapper,
+  .preview-panel,
   .document-container {
     display: block !important;
-    width: 100% !important;
-    max-width: none !important;
-    margin: 0 !important;
+    width: 210mm !important;
+    max-width: 210mm !important;
+    margin: 0 auto !important;
     padding: 0 !important;
-    height: auto !important;
-    min-height: 0 !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
     border: none !important;
     box-shadow: none !important;
-    overflow: visible !important;
+    background: #FFFFFF !important;
+    overflow: hidden !important;
   }
 
   .a4-sheet {
     display: flex !important;
     flex-direction: column !important;
     justify-content: space-between !important;
-    width: 100% !important;
-    min-width: 0 !important;
-    max-width: 100% !important;
-    height: auto !important;
-    min-height: 0 !important;
-    max-height: none !important;
+    width: 210mm !important;
+    max-width: 210mm !important;
+    min-width: 210mm !important;
+    height: 297mm !important;
+    min-height: 297mm !important;
+    max-height: 297mm !important;
+    padding: 38px 48px 30px 48px !important;
+    margin: 0 auto !important;
     box-shadow: none !important;
     border: none !important;
     border-radius: 0 !important;
-    padding: 0 !important;
-    margin: 0 auto !important;
     transform: none !important;
-    page-break-before: avoid !important;
-    break-before: avoid !important;
-    page-break-after: avoid !important;
-    break-after: avoid !important;
-    page-break-inside: auto !important;
-    break-inside: auto !important;
-    overflow: visible !important;
     background: #FFFFFF !important;
-  }
-
-  .doc-header {
+    box-sizing: border-box !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
-    margin-bottom: 8px !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
+    overflow: hidden !important;
+  }
+
+  /* Encabezado con Logo oficial - EXACTO al modelo de correo */
+  header.doc-header,
+  .doc-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-end !important;
+    margin-bottom: 24px !important;
+    width: 100% !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   .doc-logo {
+    display: block !important;
     height: 48px !important;
+    width: auto !important;
+    object-fit: contain !important;
+    visibility: visible !important;
+    opacity: 1 !important;
   }
 
   .doc-content {
-    page-break-inside: auto !important;
-    break-inside: auto !important;
+    flex: 1 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   .doc-title {
-    margin-bottom: 10px !important;
-    font-size: 13pt !important;
+    text-align: center !important;
+    font-family: var(--font-brand) !important;
+    font-size: 1.3rem !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.04em !important;
+    color: var(--ua-dark) !important;
+    margin-bottom: 18px !important;
+    text-transform: uppercase !important;
+    text-decoration: underline !important;
   }
 
+  .doc-paragraph {
+    font-size: 0.88rem !important;
+    line-height: 1.7 !important;
+    text-align: justify !important;
+    margin-bottom: 14px !important;
+    color: #2D3748 !important;
+  }
+
+  /* Campos rellenados con línea de firma/subrayado exacto */
   .doc-fill {
-    border-bottom: none !important;
-    padding: 0 !important;
+    font-weight: 700 !important;
+    color: #0F172A !important;
+    border-bottom: 1px solid #94A3B8 !important;
+    padding: 0 2px !important;
+    display: inline !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
   .doc-fill.empty {
-    color: transparent !important;
+    color: #94A3B8 !important;
+    border-bottom: 1px dashed #CBD5E1 !important;
+    font-weight: 500 !important;
+  }
+
+  /* Tabla oficial idéntica al PDF de correo */
+  .doc-table-section {
+    margin: 14px 0 16px 0 !important;
+    width: 100% !important;
   }
 
   .doc-table {
-    page-break-inside: auto !important;
-    break-inside: auto !important;
-    margin: 10px 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: auto !important;
+    box-sizing: border-box !important;
+    margin: 10px 0 14px 0 !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
   }
 
   .doc-table th,
   .doc-table td {
-    border: 1px solid #000 !important;
-    padding: 4px 6px !important;
-    font-size: 8.5pt !important;
+    border: 1px solid #94A3B8 !important;
+    padding: 5px 8px !important;
+    font-size: 0.72rem !important;
+    line-height: 1.3 !important;
+    vertical-align: middle !important;
+    box-sizing: border-box !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
-  .doc-table tr {
-    page-break-inside: avoid !important;
-    break-inside: avoid !important;
+  .doc-table th {
+    background-color: #F1F5F9 !important;
+    color: var(--ua-dark) !important;
+    font-weight: 800 !important;
+    font-family: var(--font-brand) !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    text-align: center !important;
+    border-bottom: 2px solid #475569 !important;
   }
 
+  .doc-table tbody tr:nth-child(even) {
+    background-color: #F8FAFC !important;
+  }
+
+  .doc-table .col-num {
+    width: 1% !important;
+    white-space: nowrap !important;
+    font-weight: 700 !important;
+    color: #475569 !important;
+    text-align: center !important;
+  }
+
+  .doc-table .col-etiq {
+    width: 1% !important;
+    white-space: nowrap !important;
+    font-weight: 700 !important;
+    color: #0F172A !important;
+    text-align: center !important;
+  }
+
+  .doc-table .col-desc {
+    text-align: center !important;
+  }
+
+  .doc-table .col-marca,
+  .doc-table .col-modelo,
+  .doc-table .col-serie {
+    width: 1% !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+  }
+
+  .doc-table .col-estado {
+    width: 1% !important;
+    white-space: nowrap !important;
+    text-align: center !important;
+    font-weight: 700 !important;
+  }
+
+  /* Sección de Firmas */
   .doc-signatures-section {
+    margin-top: 20px !important;
+    margin-bottom: 6px !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
-    margin-top: 18px !important;
+  }
+
+  .signatures-grid {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 24px !important;
+    margin-top: 14px !important;
+  }
+
+  .signature-column {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    text-align: center !important;
+  }
+
+  .signature-stamp-area {
+    height: 70px !important;
+    width: 210px !important;
+    display: flex !important;
+    align-items: flex-end !important;
+    justify-content: center !important;
+    margin-bottom: 4px !important;
+  }
+
+  .signature-stamp-img {
+    max-height: 68px !important;
+    max-width: 100% !important;
+    object-fit: contain !important;
+    display: block !important;
+    margin: 0 auto !important;
   }
 
   .signature-line {
-    border-top: 1.5px solid #000 !important;
+    width: 220px !important;
+    border-top: 1.5px solid #1A0901 !important;
+    margin-bottom: 6px !important;
   }
 
+  .signature-name {
+    font-size: 0.82rem !important;
+    font-weight: 700 !important;
+    color: #0F172A !important;
+    line-height: 1.25 !important;
+  }
+
+  .signature-position {
+    font-size: 0.75rem !important;
+    color: #475569 !important;
+    line-height: 1.25 !important;
+  }
+
+  .signature-dni {
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    color: #1E293B !important;
+    margin-top: 2px !important;
+  }
+
+  /* Pie institucional oficial con barra naranja y emblema */
   .doc-footer {
+    margin-top: 20px !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
-    margin-top: 18px !important;
   }
 
-  .app-bottom-bar {
-    display: none !important;
+  .doc-footer-bar {
+    width: 100% !important;
+    height: 6px !important;
+    background-color: #FFA552 !important;
+    border-radius: 2px !important;
+    margin-bottom: 2px !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .doc-footer-content {
+    display: flex !important;
+    align-items: center !important;
+    gap: 20px !important;
+  }
+
+  .doc-footer-emblem {
+    height: 38px !important;
+    width: auto !important;
+    display: block !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .doc-footer-info {
+    font-size: 8pt !important;
+    line-height: 1.4 !important;
+    color: #475569 !important;
+  }
+
+  .doc-footer-info .footer-link {
+    color: #EA580C !important;
+    font-weight: 700 !important;
   }
 }
 
