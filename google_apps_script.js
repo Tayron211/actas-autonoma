@@ -242,11 +242,15 @@ function doPost(e) {
       var subject = data.subject || "Acta Oficial DTI — Universidad Autónoma del Perú";
       var body = data.body || "";
       var attachments = [];
-
-      if (data.pdfBase64) {
-        var pdfBytes = Utilities.base64Decode(data.pdfBase64);
+      var singlePdfBase64 = data.pdfBase64 || data.fileBase64;
+      if (singlePdfBase64) {
+        var pdfBytes = Utilities.base64Decode(singlePdfBase64);
         var pdfName = (data.filename || "Acta_Oficial").replace(/\.html$/i, ".pdf");
         attachments.push(Utilities.newBlob(pdfBytes, "application/pdf", pdfName));
+      }
+      // Garantizar estrictamente 1 solo documento adjunto
+      if (attachments.length > 1) {
+        attachments = [attachments[0]];
       }
 
       var htmlBody = data.htmlBody || (body || "").replace(/\n/g, "<br>");

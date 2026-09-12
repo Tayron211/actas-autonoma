@@ -1422,11 +1422,14 @@ function doPost(e) {
       var subject = data.subject || "Acta Oficial DTI — Universidad Autónoma del Perú";
       var body = data.body || "";
       var attachments = [];
-
-      if (data.pdfBase64) {
-        var pdfBytes = Utilities.base64Decode(data.pdfBase64);
+      var singlePdfBase64 = data.pdfBase64 || data.fileBase64;
+      if (singlePdfBase64) {
+        var pdfBytes = Utilities.base64Decode(singlePdfBase64);
         var pdfName = (data.filename || "Acta_Oficial").replace(/\\.html$/i, ".pdf");
         attachments.push(Utilities.newBlob(pdfBytes, "application/pdf", pdfName));
+      }
+      if (attachments.length > 1) {
+        attachments = [attachments[0]];
       }
 
       var htmlBody = data.htmlBody || (body || "").replace(/\\n/g, "<br>");
@@ -2804,6 +2807,8 @@ www.autonoma.pe`;
 
   // Envío Directo y Automático de Correo con PDF Adjunto
   async function handleSendDirectEmail() {
+    if (state.isSendingEmail) return;
+
     let to = document.getElementById('emailTo')?.value.trim() || '';
     to = sanitizeEmail(to);
     const emailToInput = document.getElementById('emailTo');
@@ -2868,11 +2873,13 @@ www.autonoma.pe`;
       return;
     }
 
+    state.isSendingEmail = true;
     const origBtnHtml = btnDirect ? btnDirect.innerHTML : '';
     if (resultBox) resultBox.style.display = 'none';
     if (progressBox) progressBox.style.display = 'flex';
     if (btnDirect) {
       btnDirect.disabled = true;
+      btnDirect.style.pointerEvents = 'none';
       btnDirect.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="animation: spin 1s linear infinite; vertical-align: middle; margin-right: 5px;"><path d="M21 12a9 9 0 1 1-6.219-8.56"></path></svg><span>Enviando...</span>`;
     }
 
@@ -2907,9 +2914,7 @@ www.autonoma.pe`;
           tipo: meta.tipo,
           mes: meta.mes,
           anio: meta.anio,
-          mesCarpeta: meta.monthFolderName,
-          fileBase64: pdfBase64,
-          mimeType: 'application/pdf'
+          mesCarpeta: meta.monthFolderName
         };
 
         const drivePayload = {
@@ -2968,23 +2973,14 @@ www.autonoma.pe`;
           } catch (localErr) {}
         }
 
-        // Envío directo de correo y respaldo garantizado en Google Drive en paralelo
+        // Envío directo de correo y respaldo automático en Google Drive en 1 sola llamada
         if (!proxyOk) {
-          const sendEmailPromise = fetch(targetWebhook, {
+          await fetch(targetWebhook, {
             method: 'POST',
             mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify(gasPayload)
           });
-
-          const uploadDrivePromise = fetch(targetWebhook, {
-            method: 'POST',
-            mode: 'no-cors',
-            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify(drivePayload)
-          });
-
-          await Promise.all([sendEmailPromise, uploadDrivePromise]);
           sent = true;
           methodUsed = 'Google Workspace (Directo + Drive)';
         }
@@ -3052,8 +3048,10 @@ www.autonoma.pe`;
       }
       showToast('Error en envío: ' + err.message, 'error', 5000);
     } finally {
+      state.isSendingEmail = false;
       if (btnDirect) {
         btnDirect.disabled = false;
+        btnDirect.style.pointerEvents = 'auto';
         btnDirect.innerHTML = origBtnHtml;
       }
     }
@@ -3217,6 +3215,7 @@ www.autonoma.pe`;
       window.addEventListener('load', () => {
         navigator.serviceWorker.register('./sw.js').then(reg => {
           console.log('Service Worker de Actas DTI registrado:', reg.scope);
+          reg.update().catch(() => {});
         }).catch(err => {
           console.warn('Registro SW:', err);
         });
