@@ -182,6 +182,12 @@ import android.provider.MediaStore;
 import android.print.PrintManager;
 import android.print.PrintDocumentAdapter;
 import android.print.PrintAttributes;
+import android.print.PrintDocumentInfo;
+import android.print.PageRange;
+import android.os.ParcelFileDescriptor;
+import android.os.CancellationSignal;
+import android.os.Bundle;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.File;
 import java.io.FileInputStream;
@@ -191,10 +197,90 @@ public class MainActivity extends Activity {
     private WebView webView;
     private LinearLayout splashView;
 
+    private class PdfPrintAdapter extends PrintDocumentAdapter {
+        private File file;
+
+        public PdfPrintAdapter(File file) {
+            this.file = file;
+        }
+
+        @Override
+        public void onLayout(PrintAttributes oldAttributes, PrintAttributes newAttributes,
+                             CancellationSignal cancellationSignal,
+                             LayoutResultCallback callback,
+                             Bundle metadata) {
+            if (cancellationSignal.isCanceled()) {
+                callback.onLayoutCancelled();
+                return;
+            }
+            PrintDocumentInfo pdi = new PrintDocumentInfo.Builder(file.getName())
+                    .setContentType(PrintDocumentInfo.CONTENT_TYPE_DOCUMENT)
+                    .setPageCount(PrintDocumentInfo.PAGE_COUNT_UNKNOWN)
+                    .build();
+            callback.onLayoutFinished(pdi, true);
+        }
+
+        @Override
+        public void onWrite(PageRange[] pages,
+                            ParcelFileDescriptor destination,
+                            CancellationSignal cancellationSignal,
+                            WriteResultCallback callback) {
+            InputStream input = null;
+            OutputStream output = null;
+            try {
+                input = new FileInputStream(file);
+                output = new FileOutputStream(destination.getFileDescriptor());
+                byte[] buf = new byte[16384];
+                int bytesRead;
+                while ((bytesRead = input.read(buf)) > 0) {
+                    if (cancellationSignal.isCanceled()) {
+                        callback.onWriteCancelled();
+                        return;
+                    }
+                    output.write(buf, 0, bytesRead);
+                }
+                callback.onWriteFinished(new PageRange[]{PageRange.ALL_PAGES});
+            } catch (Exception e) {
+                callback.onWriteFailed(e.getMessage());
+            } finally {
+                try { if (input != null) input.close(); } catch (Exception ignored) {}
+                try { if (output != null) output.close(); } catch (Exception ignored) {}
+            }
+        }
+    }
+
     public class AndroidBridge {
         @JavascriptInterface
         public boolean isNativeApp() {
             return true;
+        }
+
+        @JavascriptInterface
+        public void printPdf(final String base64Data, final String filename) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        byte[] pdfBytes = Base64.decode(base64Data, Base64.DEFAULT);
+                        File tempFile = new File(MainActivity.this.getCacheDir(), "print_doc.pdf");
+                        FileOutputStream fos = new FileOutputStream(tempFile);
+                        fos.write(pdfBytes);
+                        fos.flush();
+                        fos.close();
+
+                        PrintManager printManager = (PrintManager) MainActivity.this.getSystemService(Context.PRINT_SERVICE);
+                        if (printManager != null) {
+                            String jobName = (filename != null && !filename.isEmpty()) ? filename : ("Acta_" + System.currentTimeMillis());
+                            if (jobName.endsWith(".pdf")) jobName = jobName.substring(0, jobName.length() - 4);
+                            PrintDocumentAdapter adapter = new PdfPrintAdapter(tempFile);
+                            printManager.print(jobName, adapter, new PrintAttributes.Builder().build());
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        Toast.makeText(MainActivity.this, "Error al imprimir: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                }
+            });
         }
 
         @JavascriptInterface

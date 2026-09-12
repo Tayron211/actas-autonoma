@@ -1087,50 +1087,19 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // 1. Si estamos en la aplicación nativa Android (APK)
-    if (window.AndroidBridge && typeof window.AndroidBridge.print === 'function') {
-      const prevTransform = sheet ? sheet.style.transform : '';
-      const prevMarginBottom = sheet ? sheet.style.marginBottom : '';
-      const prevMarginLeft = sheet ? sheet.style.marginLeft : '';
-      const prevMarginRight = sheet ? sheet.style.marginRight : '';
-      const prevWidth = sheet ? sheet.style.width : '';
+    showToast('🖨️ Preparando documento oficial para impresión...', 'info', 1800);
 
-      if (sheet) {
-        sheet.style.transform = 'none';
-        sheet.style.marginBottom = '0';
-        sheet.style.marginLeft = 'auto';
-        sheet.style.marginRight = 'auto';
-        sheet.style.width = '100%';
-      }
-      document.body.classList.add('is-printing');
-
-      setTimeout(() => {
-        try {
-          window.AndroidBridge.print();
-        } catch (eNative) {
-          console.error('Error puente nativo print:', eNative);
-        }
-        setTimeout(() => {
-          document.body.classList.remove('is-printing');
-          if (sheet) {
-            sheet.style.transform = prevTransform;
-            sheet.style.marginBottom = prevMarginBottom;
-            sheet.style.marginLeft = prevMarginLeft;
-            sheet.style.marginRight = prevMarginRight;
-            sheet.style.width = prevWidth;
-          }
-          if (window.innerWidth <= 992) applyZoom();
-        }, 5000);
-      }, 150);
-      return;
-    }
-
-    // 2. En navegadores web (PC y móviles):
-    // Generar el PDF oficial exacto y enviarlo a imprimir directamente para garantizar fidelidad absoluta
+    // 1. Generar el PDF oficial exacto para garantizar fidelidad absoluta (mismo modelo que correo)
     try {
-      showToast('🖨️ Preparando documento oficial para impresión...', 'info', 1800);
-      const { pdfBase64 } = await generateDocumentPdf({ download: false });
+      const { pdfBase64, filename } = await generateDocumentPdf({ download: false });
       if (pdfBase64) {
+        // En la aplicación nativa Android (APK) con soporte printPdf:
+        if (window.AndroidBridge && typeof window.AndroidBridge.printPdf === 'function') {
+          window.AndroidBridge.printPdf(pdfBase64, filename || 'Acta_Oficial.pdf');
+          return;
+        }
+
+        // En navegadores web (PC y móviles):
         const byteCharacters = atob(pdfBase64);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
@@ -1169,7 +1138,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.warn('Fallback a impresión DOM:', ePdfPrint);
     }
 
-    // Fallback nativo: activar modo is-printing en el body con CSS oficial
+    // 2. Fallback nativo: activar modo is-printing en el body con CSS oficial
     const prevTransform = sheet ? sheet.style.transform : '';
     const prevMarginBottom = sheet ? sheet.style.marginBottom : '';
     const prevMarginLeft = sheet ? sheet.style.marginLeft : '';
@@ -1187,9 +1156,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     setTimeout(() => {
       try {
-        window.print();
+        if (window.AndroidBridge && typeof window.AndroidBridge.print === 'function') {
+          window.AndroidBridge.print();
+        } else {
+          window.print();
+        }
       } catch (ePrint) {
-        console.warn('Error al invocar window.print():', ePrint);
+        console.warn('Error al invocar print():', ePrint);
       }
       setTimeout(() => {
         document.body.classList.remove('is-printing');
@@ -1201,7 +1174,7 @@ document.addEventListener('DOMContentLoaded', () => {
           sheet.style.width = prevWidth;
         }
         if (window.innerWidth <= 992) applyZoom();
-      }, 2500);
+      }, 3500);
     }, 150);
   }
 

@@ -2206,7 +2206,6 @@ body {
   margin: 0 !important; /* Elimina encabezados y pies de página automáticos del navegador (fecha, hora, URL) */
 }
 
-body.is-printing,
 @media print {
   html, body {
     width: 210mm !important;
@@ -2227,20 +2226,28 @@ body.is-printing,
 
   /* Ocultar elementos de la interfaz de la aplicación, NUNCA el encabezado oficial del documento */
   .app-header,
+  header.app-header,
   .mobile-view-tabs,
   .mobile-bottom-nav,
   .form-panel,
   .preview-toolbar,
+  .toolbar-actions,
+  .zoom-controls,
   .modal-overlay,
   .toast-container,
   .btn,
   .no-print,
   #toastNotification,
   .app-bottom-bar,
-  nav.mobile-bottom-nav {
+  nav.mobile-bottom-nav,
+  .signature-actions,
+  #installPwaModal,
+  #customAlertModal,
+  #appSplashScreen {
     display: none !important;
     visibility: hidden !important;
     height: 0 !important;
+    width: 0 !important;
     min-height: 0 !important;
     max-height: 0 !important;
     margin: 0 !important;
@@ -2545,6 +2552,76 @@ body.is-printing,
     color: #EA580C !important;
     font-weight: 700 !important;
   }
+}
+
+/* Soporte auxiliar para modo body.is-printing */
+body.is-printing .app-header,
+body.is-printing header.app-header,
+body.is-printing .mobile-view-tabs,
+body.is-printing .mobile-bottom-nav,
+body.is-printing .form-panel,
+body.is-printing .preview-toolbar,
+body.is-printing .toolbar-actions,
+body.is-printing .zoom-controls,
+body.is-printing .modal-overlay,
+body.is-printing .toast-container,
+body.is-printing .btn,
+body.is-printing .no-print,
+body.is-printing #toastNotification,
+body.is-printing .app-bottom-bar,
+body.is-printing nav.mobile-bottom-nav,
+body.is-printing .signature-actions,
+body.is-printing #installPwaModal,
+body.is-printing #customAlertModal,
+body.is-printing #appSplashScreen {
+  display: none !important;
+  visibility: hidden !important;
+  height: 0 !important;
+  width: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: none !important;
+  overflow: hidden !important;
+}
+
+body.is-printing .main-wrapper,
+body.is-printing .preview-panel,
+body.is-printing .document-container {
+  display: block !important;
+  width: 210mm !important;
+  max-width: 210mm !important;
+  margin: 0 auto !important;
+  padding: 0 !important;
+  height: 297mm !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: #FFFFFF !important;
+  overflow: hidden !important;
+}
+
+body.is-printing .a4-sheet {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important;
+  width: 210mm !important;
+  max-width: 210mm !important;
+  min-width: 210mm !important;
+  height: 297mm !important;
+  min-height: 297mm !important;
+  max-height: 297mm !important;
+  padding: 38px 48px 30px 48px !important;
+  margin: 0 auto !important;
+  box-shadow: none !important;
+  border: none !important;
+  border-radius: 0 !important;
+  transform: none !important;
+  background: #FFFFFF !important;
+  box-sizing: border-box !important;
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+  page-break-after: avoid !important;
+  break-after: avoid !important;
+  overflow: hidden !important;
 }
 
 /* ----------------------------------------------------------
