@@ -1,14 +1,14 @@
-const CACHE_NAME = 'actas-dti-v36';
+const CACHE_NAME = 'actas-dti-v37';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './css/app.css?v=36',
+  './css/app.css?v=37',
   './brand/css/variables.css?v=15',
   './brand/css/typography.css?v=15',
   './brand/css/buttons.css?v=15',
   './brand/css/forms.css?v=15',
-  './js/app.js?v=36',
+  './js/app.js?v=37',
   './js/html2pdf.bundle.min.js',
   './js/signature.js',
   './brand/pwa-icon-192.png',
@@ -49,7 +49,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Network-first para scripts, estilos y HTML (siempre el cÃ³digo mÃ¡s reciente, con fallback offline)
+  // Network-first para scripts, estilos y HTML (siempre el código más reciente, con fallback offline)
   if (url.pathname.endsWith('.js') || url.pathname.endsWith('.css') || url.pathname.endsWith('.html') || event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
@@ -65,7 +65,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Stale-while-revalidate para imÃ¡genes y fuentes estÃ¡ticas
+  // Stale-while-revalidate para imágenes y fuentes estáticas
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request).then((networkResponse) => {
