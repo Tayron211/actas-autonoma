@@ -302,7 +302,7 @@ function doPost(e) {
 
       saveDbData(rootFolder, dbData);
 
-      // Borrar archivo correspondiente en Google Drive
+      // Borrar archivo correspondiente en Google Drive de forma exhaustiva
       var deletedFromDrive = false;
       try {
         var filename = (data.filename || (targetActa && targetActa.filename) || "").replace(/\.html$/i, ".pdf");
@@ -316,7 +316,7 @@ function doPost(e) {
           }
         }
 
-        // 1. Borrar por fileId si está disponible
+        // 1. Borrado directo por ID de archivo de Google Drive
         if (fileId) {
           try {
             var targetFile = DriveApp.getFileById(fileId);
@@ -329,17 +329,61 @@ function doPost(e) {
           }
         }
 
-        // 2. Si no se borró por ID, buscar por nombre exacto dentro del repositorio
-        if (!deletedFromDrive && filename) {
+        // 2. Búsqueda y eliminación por nombre en todo Google Drive
+        if (filename) {
           try {
-            var searchFiles = rootFolder.searchFiles("title = '" + filename.replace(/'/g, "\\'") + "' and trashed = false");
-            while (searchFiles.hasNext()) {
-              var sFile = searchFiles.next();
-              sFile.setTrashed(true);
-              deletedFromDrive = true;
+            var fIter = DriveApp.getFilesByName(filename);
+            while (fIter.hasNext()) {
+              var fItem = fIter.next();
+              if (!fItem.isTrashed()) {
+                fItem.setTrashed(true);
+                deletedFromDrive = true;
+              }
             }
-          } catch(eSearch) {
-            console.warn("Aviso en búsqueda de archivo para eliminar:", eSearch);
+            var htmlAlt = filename.replace(/\.pdf$/i, ".html");
+            if (htmlAlt !== filename) {
+              var fHtmlIter = DriveApp.getFilesByName(htmlAlt);
+              while (fHtmlIter.hasNext()) {
+                var fHtml = fHtmlIter.next();
+                if (!fHtml.isTrashed()) {
+                  fHtml.setTrashed(true);
+                  deletedFromDrive = true;
+                }
+              }
+            }
+          } catch(eGlobal) {
+            console.warn("Aviso en búsqueda global por nombre:", eGlobal);
+          }
+        }
+
+        // 3. Búsqueda recursiva dentro de la carpeta raíz oficial y subcarpetas mensuales
+        if (filename) {
+          try {
+            function trashMatchingFilesInFolder(folder, targetName) {
+              var count = 0;
+              var targetLower = targetName.toLowerCase().trim();
+              var files = folder.getFiles();
+              while (files.hasNext()) {
+                var f = files.next();
+                var fName = f.getName().toLowerCase().trim();
+                if (fName === targetLower || fName.replace(/\.html$/, ".pdf") === targetLower) {
+                  try {
+                    f.setTrashed(true);
+                    count++;
+                  } catch(eT) {}
+                }
+              }
+              var subfolders = folder.getFolders();
+              while (subfolders.hasNext()) {
+                count += trashMatchingFilesInFolder(subfolders.next(), targetName);
+              }
+              return count;
+            }
+
+            var trashedInFolder = trashMatchingFilesInFolder(rootFolder, filename);
+            if (trashedInFolder > 0) deletedFromDrive = true;
+          } catch(eRec) {
+            console.warn("Aviso en búsqueda recursiva en carpeta:", eRec);
           }
         }
       } catch (errDriveDel) {
@@ -367,11 +411,46 @@ function doPost(e) {
           if (dbData.deletedIds.indexOf(did) === -1) dbData.deletedIds.push(did);
         }
       });
+
+      // Mover a la papelera todos los archivos asociados a las actas
+      (dbData.actas || []).forEach(function(acta) {
+        if (acta.fileId) {
+          try { DriveApp.getFileById(acta.fileId).setTrashed(true); } catch(e) {}
+        }
+        if (acta.filename) {
+          try {
+            var fIter = DriveApp.getFilesByName(acta.filename);
+            while (fIter.hasNext()) { fIter.next().setTrashed(true); }
+          } catch(e) {}
+        }
+      });
+
+      // Limpiar recursivamente todos los PDFs en las subcarpetas mensuales
+      try {
+        var subCat = rootFolder.getFolders();
+        while (subCat.hasNext()) {
+          var cFolder = subCat.next();
+          var monthF = cFolder.getFolders();
+          while (monthF.hasNext()) {
+            var mFolder = monthF.next();
+            var mFiles = mFolder.getFiles();
+            while (mFiles.hasNext()) {
+              var mf = mFiles.next();
+              if (mf.getName().toLowerCase().endsWith(".pdf") || mf.getName().toLowerCase().endsWith(".html")) {
+                try { mf.setTrashed(true); } catch(e) {}
+              }
+            }
+          }
+        }
+      } catch(eTrashAll) {
+        console.warn("Aviso al vaciar archivos de carpetas:", eTrashAll);
+      }
+
       dbData.actas = [];
       saveDbData(rootFolder, dbData);
       return ContentService.createTextOutput(JSON.stringify({
         status: "success",
-        message: "Historial vaciado correctamente",
+        message: "Historial y archivos de Google Drive vaciados correctamente",
         count: 0,
         actas: [],
         deletedIds: dbData.deletedIds
@@ -424,6 +503,7 @@ function doPost(e) {
           var fileBlob = Utilities.newBlob(rawFile, "application/pdf", (data.filename || "Acta_Oficial").replace(/\.html$/i, ".pdf"));
           var uploadedFile = monthFolder.createFile(fileBlob);
           driveFileUrl = uploadedFile.getUrl();
+          driveFileId = uploadedFile.getId();
           driveMonthUrl = monthFolder.getUrl();
         }
       } catch (driveErr) {
@@ -443,6 +523,7 @@ function doPost(e) {
           colabEmail: to,
           fecha: data.fecha || (data.mes + " " + data.anio),
           filename: (data.filename || "Acta_Oficial").replace(/\.html$/i, ".pdf"),
+          fileId: driveFileId || "",
           driveUrl: driveFileUrl || ("https://drive.google.com/drive/folders/" + ROOT_FOLDER_ID),
           driveFolderUrl: driveMonthUrl || ("https://drive.google.com/drive/folders/" + ROOT_FOLDER_ID),
           emailSent: true,
@@ -459,6 +540,7 @@ function doPost(e) {
         status: "success",
         message: "Correo enviado y acta respaldada automáticamente en Google Drive 24/7",
         sentTo: to,
+        driveFileId: driveFileId || "",
         driveFileUrl: driveFileUrl,
         driveMonthUrl: driveMonthUrl,
         attachmentsCount: attachments.length
@@ -501,6 +583,7 @@ function doPost(e) {
         colabEmail: data.colabEmail || "",
         fecha: data.fecha || (data.mes + " " + data.anio),
         filename: data.filename,
+        fileId: file.getId(),
         driveUrl: file.getUrl(),
         driveFolderUrl: monthFolder.getUrl(),
         driveUploaded: true
@@ -516,6 +599,7 @@ function doPost(e) {
       status: "success",
       message: "Guardado correctamente en Google Drive 24/7",
       fileName: file.getName(),
+      fileId: file.getId(),
       fileUrl: file.getUrl(),
       monthFolderName: monthName,
       monthFolderUrl: monthFolder.getUrl(),
