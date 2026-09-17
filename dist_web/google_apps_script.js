@@ -111,33 +111,63 @@ function getOrCreateDbFile(rootFolder) {
   if (files.hasNext()) {
     return files.next();
   }
-  return rootFolder.createFile(DB_FILE_NAME, JSON.stringify(INITIAL_SEED_ACTAS, null, 2), "application/json");
+  var initialData = {
+    version: 2,
+    lastUpdated: new Date().toISOString(),
+    actas: INITIAL_SEED_ACTAS,
+    deletedIds: []
+  };
+  return rootFolder.createFile(DB_FILE_NAME, JSON.stringify(initialData, null, 2), "application/json");
 }
 
-function loadActasFromDb(rootFolder) {
+function loadDbData(rootFolder) {
   try {
     var file = getOrCreateDbFile(rootFolder);
     var content = file.getBlob().getDataAsString("UTF-8");
-    var parsed = JSON.parse(content || "[]");
-    if (Array.isArray(parsed) && parsed.length > 0) {
-      return parsed;
+    var parsed = JSON.parse(content || "{}");
+    if (Array.isArray(parsed)) {
+      return { actas: parsed, deletedIds: [] };
     }
-    return INITIAL_SEED_ACTAS;
+    if (parsed && typeof parsed === "object") {
+      return {
+        version: parsed.version || 2,
+        lastUpdated: parsed.lastUpdated || "",
+        actas: Array.isArray(parsed.actas) ? parsed.actas : [],
+        deletedIds: Array.isArray(parsed.deletedIds) ? parsed.deletedIds : []
+      };
+    }
+    return { actas: [], deletedIds: [] };
   } catch (err) {
     console.error("Error al leer actas de Google Drive:", err);
-    return INITIAL_SEED_ACTAS;
+    return { actas: [], deletedIds: [] };
   }
 }
 
-function saveActasToDb(rootFolder, actasList) {
+function loadActasFromDb(rootFolder) {
+  return loadDbData(rootFolder).actas;
+}
+
+function saveDbData(rootFolder, dbData) {
   try {
     var file = getOrCreateDbFile(rootFolder);
-    file.setContent(JSON.stringify(actasList, null, 2));
+    var toSave = {
+      version: 2,
+      lastUpdated: new Date().toISOString(),
+      actas: Array.isArray(dbData.actas) ? dbData.actas : [],
+      deletedIds: Array.isArray(dbData.deletedIds) ? dbData.deletedIds : []
+    };
+    file.setContent(JSON.stringify(toSave, null, 2));
     return true;
   } catch (err) {
     console.error("Error al escribir actas en Google Drive:", err);
     return false;
   }
+}
+
+function saveActasToDb(rootFolder, actasList) {
+  var current = loadDbData(rootFolder);
+  current.actas = actasList;
+  return saveDbData(rootFolder, current);
 }
 
 function upsertActaInList(actasList, newActa) {
@@ -176,12 +206,13 @@ function doPost(e) {
   try {
     if (!e || !e.postData || !e.postData.contents) {
       var rootFolder = DriveApp.getFolderById(ROOT_FOLDER_ID);
-      var actasList = loadActasFromDb(rootFolder);
+      var dbData = loadDbData(rootFolder);
       return ContentService.createTextOutput(JSON.stringify({
         status: "success",
         message: "Google Apps Script 24/7 activo",
-        count: actasList.length,
-        actas: actasList
+        count: dbData.actas.length,
+        actas: dbData.actas,
+        deletedIds: dbData.deletedIds
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
@@ -192,11 +223,12 @@ function doPost(e) {
     // ACCIÓN 1: CONSULTA DE HISTORIAL (GET / SYNC ACTAS)
     // ------------------------------------------------------------
     if (data.action === "get_actas" || data.action === "sync_actas" || data.action === "sync") {
-      var actasList = loadActasFromDb(rootFolder);
+      var dbData = loadDbData(rootFolder);
       return ContentService.createTextOutput(JSON.stringify({
         status: "success",
-        count: actasList.length,
-        actas: actasList
+        count: dbData.actas.length,
+        actas: dbData.actas,
+        deletedIds: dbData.deletedIds
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
@@ -205,14 +237,29 @@ function doPost(e) {
     // ------------------------------------------------------------
     if (data.action === "save_acta") {
       var incomingActa = data.acta || data;
-      var actasList = loadActasFromDb(rootFolder);
-      actasList = upsertActaInList(actasList, incomingActa);
-      saveActasToDb(rootFolder, actasList);
+      var dbData = loadDbData(rootFolder);
+
+      // Si el acta fue eliminada previamente por el admin, no revivirla por sincronización accidental
+      var deletedMap = {};
+      (dbData.deletedIds || []).forEach(function(did) { deletedMap[did] = true; });
+      if (incomingActa && (deletedMap[incomingActa.id] || deletedMap[incomingActa.filename])) {
+        return ContentService.createTextOutput(JSON.stringify({
+          status: "ignored",
+          message: "Acta ignorada: fue eliminada permanentemente por un administrador",
+          count: dbData.actas.length,
+          actas: dbData.actas,
+          deletedIds: dbData.deletedIds
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+
+      dbData.actas = upsertActaInList(dbData.actas, incomingActa);
+      saveDbData(rootFolder, dbData);
       return ContentService.createTextOutput(JSON.stringify({
         status: "success",
         message: "Acta registrada y sincronizada en Google Drive 24/7",
-        count: actasList.length,
-        actas: actasList
+        count: dbData.actas.length,
+        actas: dbData.actas,
+        deletedIds: dbData.deletedIds
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
@@ -221,16 +268,39 @@ function doPost(e) {
     // ------------------------------------------------------------
     if (data.action === "delete_acta") {
       var targetId = data.id || "";
-      var actasList = loadActasFromDb(rootFolder);
+      var targetFilename = data.filename || "";
+      var dbData = loadDbData(rootFolder);
       var targetActa = null;
-      for (var i = 0; i < actasList.length; i++) {
-        if (actasList[i].id === targetId) {
-          targetActa = actasList[i];
+
+      for (var i = 0; i < dbData.actas.length; i++) {
+        if ((targetId && dbData.actas[i].id === targetId) || (targetFilename && dbData.actas[i].filename === targetFilename)) {
+          targetActa = dbData.actas[i];
           break;
         }
       }
-      actasList = actasList.filter(function(a) { return a.id !== targetId; });
-      saveActasToDb(rootFolder, actasList);
+
+      // Eliminar de la lista de actas
+      dbData.actas = dbData.actas.filter(function(a) { 
+        if (targetId && a.id === targetId) return false;
+        if (targetFilename && a.filename === targetFilename) return false;
+        return true; 
+      });
+
+      // Registrar en la lista de eliminados permanentes (tombstones)
+      var dSet = {};
+      (dbData.deletedIds || []).forEach(function(id) { dSet[id] = true; });
+      if (targetId) dSet[targetId] = true;
+      if (targetFilename) dSet[targetFilename] = true;
+      if (targetActa && targetActa.id) dSet[targetActa.id] = true;
+      if (targetActa && targetActa.filename) dSet[targetActa.filename] = true;
+
+      var allDeleted = Object.keys(dSet);
+      if (allDeleted.length > 500) {
+        allDeleted = allDeleted.slice(allDeleted.length - 500);
+      }
+      dbData.deletedIds = allDeleted;
+
+      saveDbData(rootFolder, dbData);
 
       // Borrar archivo correspondiente en Google Drive
       var deletedFromDrive = false;
@@ -280,8 +350,9 @@ function doPost(e) {
         status: "success",
         message: deletedFromDrive ? "Acta y archivo de Google Drive eliminados correctamente" : "Acta eliminada del historial en la nube",
         deletedFromDrive: deletedFromDrive,
-        count: actasList.length,
-        actas: actasList
+        count: dbData.actas.length,
+        actas: dbData.actas,
+        deletedIds: dbData.deletedIds
       })).setMimeType(ContentService.MimeType.JSON);
     }
 

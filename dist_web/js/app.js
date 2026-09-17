@@ -3616,6 +3616,7 @@ www.autonoma.pe`;
 
   var CloudDatabaseManager = {
     actas: [],
+    deletedIds: new Set(), // IDs permanentemente eliminados (tombstones de la nube y locales)
     listeners: [],
     isSyncing: false,
     lastSyncTime: null,
@@ -3632,29 +3633,44 @@ www.autonoma.pe`;
     },
 
     async init() {
-      // 1. Cargar caché local instantánea (0 ms lag)
+      // 1. Cargar IDs eliminados persistidos
       try {
-        const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
-        if (cached) {
-          this.actas = JSON.parse(cached);
-        }
-      } catch (e) {}
-
-      // 2. Cargar desde AndroidBridge si estamos en la app móvil nativa
-      try {
-        if (window.AndroidBridge && typeof window.AndroidBridge.getActas === 'function') {
-          const nativeList = JSON.parse(window.AndroidBridge.getActas() || '[]');
-          if (Array.isArray(nativeList) && nativeList.length > 0) {
-            this.mergeActas(nativeList, false);
+        const storedDeleted = localStorage.getItem('ua_actas_deleted_ids_v1');
+        if (storedDeleted) {
+          const parsed = JSON.parse(storedDeleted);
+          if (Array.isArray(parsed)) {
+            this.deletedIds = new Set(parsed);
           }
         }
       } catch (e) {}
 
-      // 3. Limpiar cualquier registro huérfano/vacío
+      // 2. Cargar caché local instantánea (0 ms lag)
+      try {
+        const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
+        if (cached) {
+          const all = JSON.parse(cached);
+          this.actas = Array.isArray(all)
+            ? all.filter(a => !this.deletedIds.has(a.id) && !this.deletedIds.has(a.filename))
+            : [];
+        }
+      } catch (e) {}
+
+      // 3. Cargar desde AndroidBridge si estamos en la app móvil nativa
+      try {
+        if (window.AndroidBridge && typeof window.AndroidBridge.getActas === 'function') {
+          const nativeList = JSON.parse(window.AndroidBridge.getActas() || '[]');
+          if (Array.isArray(nativeList) && nativeList.length > 0) {
+            const validNative = nativeList.filter(a => !this.deletedIds.has(a.id) && !this.deletedIds.has(a.filename));
+            this.mergeActas(validNative, false);
+          }
+        }
+      } catch (e) {}
+
+      // 4. Limpiar cualquier registro huérfano/vacío
       this.cleanEmptyActas();
       cachedHistoryActas = this.actas;
 
-      // 4. Intentar cargar config.json para descubrir webhook actualizado si lo hubiera
+      // 5. Intentar cargar config.json para descubrir webhook actualizado si lo hubiera
       try {
         const cfgRes = await fetch('config.json');
         if (cfgRes.ok) {
@@ -3665,15 +3681,15 @@ www.autonoma.pe`;
         }
       } catch(e) {}
 
-      // 5. Primera sincronización inmediata 24/7 con Google Apps Script
+      // 6. Primera sincronización inmediata 24/7 con Google Apps Script
       this.syncFromCloud();
 
-      // 6. Sincronización inteligente periódica en segundo plano (cada 15s)
+      // 7. Sincronización inteligente periódica en segundo plano (cada 10s)
       setInterval(() => {
         this.syncFromCloud();
-      }, 15000);
+      }, 10000);
 
-      // 7. Sincronización inmediata al reactivar la app o pestaña
+      // 8. Sincronización inmediata al reactivar la app o pestaña
       document.addEventListener('visibilitychange', () => {
         if (document.visibilityState === 'visible') {
           this.syncFromCloud();
@@ -3686,7 +3702,7 @@ www.autonoma.pe`;
         this.syncFromCloud();
       });
 
-      // 8. Suscribir render de historial a cambios en tiempo real
+      // 9. Suscribir render de historial a cambios en tiempo real
       this.subscribe((actas) => {
         cachedHistoryActas = actas;
         const historyModal = document.getElementById('historyModal');
@@ -3698,6 +3714,7 @@ www.autonoma.pe`;
 
     cleanEmptyActas() {
       this.actas = (this.actas || []).filter(a => {
+        if (this.deletedIds.has(a.id) || this.deletedIds.has(a.filename)) return false;
         const colab = (a.colaborador || '').trim();
         const hasColab = colab !== '' && colab !== 'Colaborador';
         const hasDni = a.colabDni && a.colabDni.trim() !== '' && a.colabDni !== '---';
@@ -3711,16 +3728,92 @@ www.autonoma.pe`;
       } catch(e) {}
     },
 
+    /**
+     * Aplica la lista de la nube como FUENTE DE LA VERDAD AUTORITATIVA.
+     * Si la nube no contiene un acta y esta no es un borrador nuevo pendiente localmente,
+     * se asume que fue eliminada en otro dispositivo y se PURGA inmediatamente.
+     */
+    applyAuthoritativeSync(cloudActas, newDeletedIds = []) {
+      if (!Array.isArray(cloudActas)) return;
+
+      // 1. Integrar nuevos IDs eliminados recibidos de la nube
+      if (Array.isArray(newDeletedIds) && newDeletedIds.length > 0) {
+        newDeletedIds.forEach(id => {
+          if (id) this.deletedIds.add(id);
+        });
+        try {
+          localStorage.setItem('ua_actas_deleted_ids_v1', JSON.stringify([...this.deletedIds]));
+        } catch(e) {}
+      }
+
+      // 2. Filtrar actas de la nube contra IDs eliminados
+      const cleanCloudActas = cloudActas.filter(a => 
+        !this.deletedIds.has(a.id) && !this.deletedIds.has(a.filename)
+      );
+
+      // 3. Crear mapa con las actas de la nube (fuente de la verdad)
+      const authoritativeMap = new Map();
+      cleanCloudActas.forEach(a => {
+        const k = a.id || a.filename;
+        if (k) authoritativeMap.set(k, a);
+      });
+
+      // 4. Conservar SOLAMENTE actas locales creadas offline que aún no hayan sido enviadas (_isPendingSync)
+      this.actas.forEach(localActa => {
+        const k = localActa.id || localActa.filename;
+        if (!k) return;
+        if (this.deletedIds.has(localActa.id) || this.deletedIds.has(localActa.filename)) return;
+
+        if (localActa._isPendingSync && !authoritativeMap.has(k)) {
+          // Es un acta recién creada localmente sin sincronizar todavía
+          authoritativeMap.set(k, localActa);
+        }
+      });
+
+      // 5. Asignar lista final depurada
+      this.actas = Array.from(authoritativeMap.values()).sort(
+        (a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0)
+      );
+      this.cleanEmptyActas();
+      cachedHistoryActas = this.actas;
+
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.actas));
+      } catch(e) {}
+
+      // Sincronizar hacia Android nativo si estamos en APK
+      this.syncToAndroidBridge();
+
+      this.notifyListeners();
+    },
+
+    syncToAndroidBridge() {
+      if (window.AndroidBridge) {
+        try {
+          if (typeof window.AndroidBridge.saveAllActas === 'function') {
+            window.AndroidBridge.saveAllActas(JSON.stringify(this.actas));
+          } else if (typeof window.AndroidBridge.saveActa === 'function') {
+            this.actas.slice(0, 10).forEach(acta => {
+              window.AndroidBridge.saveActa(JSON.stringify(acta));
+            });
+          }
+        } catch(e) {}
+      }
+    },
+
     mergeActas(incomingList, notify = true) {
       if (!Array.isArray(incomingList)) return;
       const map = new Map();
       this.actas.forEach(a => {
         const key = a.id || a.filename;
-        if (key) map.set(key, a);
+        if (key && !this.deletedIds.has(a.id) && !this.deletedIds.has(a.filename)) {
+          map.set(key, a);
+        }
       });
       incomingList.forEach(a => {
         const key = a.id || a.filename;
         if (!key) return;
+        if (this.deletedIds.has(a.id) || this.deletedIds.has(a.filename)) return;
         const existing = map.get(key);
         if (!existing || new Date(a.updatedAt || 0) >= new Date(existing.updatedAt || 0)) {
           map.set(key, { ...(existing || {}), ...a });
@@ -3733,15 +3826,7 @@ www.autonoma.pe`;
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.actas));
       } catch(e) {}
 
-      // Sincronizar hacia AndroidBridge si está en APK
-      if (window.AndroidBridge && typeof window.AndroidBridge.saveActa === 'function') {
-        try {
-          this.actas.slice(0, 10).forEach(acta => {
-            window.AndroidBridge.saveActa(JSON.stringify(acta));
-          });
-        } catch(e) {}
-      }
-
+      this.syncToAndroidBridge();
       if (notify) this.notifyListeners();
     },
 
@@ -3776,25 +3861,29 @@ www.autonoma.pe`;
       }
     },
 
-    async pushMissingLocalActas(gasUrl, cloudActas) {
-      if (!gasUrl || !Array.isArray(cloudActas)) return;
-      const cloudIds = new Set(cloudActas.map(a => a.id || a.filename).filter(Boolean));
-      const missingLocals = this.actas.filter(a => {
-        const k = a.id || a.filename;
-        return k && !cloudIds.has(k);
-      });
+    async pushPendingLocalActas(gasUrl) {
+      if (!gasUrl) return;
+      const pending = this.actas.filter(a => 
+        a._isPendingSync && !this.deletedIds.has(a.id) && !this.deletedIds.has(a.filename)
+      );
 
-      if (missingLocals.length > 0) {
-        for (const localActa of missingLocals) {
-          try {
-            await fetch(gasUrl, {
-              method: 'POST',
-              headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-              body: JSON.stringify({ action: 'save_acta', acta: localActa })
-            });
-          } catch(e) {}
-        }
+      for (const localActa of pending) {
+        try {
+          const payload = { ...localActa };
+          delete payload._isPendingSync;
+          const res = await fetch(gasUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({ action: 'save_acta', acta: payload })
+          });
+          if (res.ok) {
+            delete localActa._isPendingSync;
+          }
+        } catch(e) {}
       }
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.actas));
+      } catch(e) {}
     },
 
     async syncFromCloud() {
@@ -3809,7 +3898,7 @@ www.autonoma.pe`;
       if (gasUrl) {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 6000);
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
           const res = await fetch(gasUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -3819,42 +3908,36 @@ www.autonoma.pe`;
           clearTimeout(timeoutId);
           if (res.ok) {
             const json = await res.json();
-            const incoming = Array.isArray(json) ? json : (json.actas || []);
-            if (Array.isArray(incoming) && incoming.length > 0) {
-              this.mergeActas(incoming);
+            const rawIncoming = Array.isArray(json.actas) ? json.actas : (Array.isArray(json) ? json : null);
+            const cloudDeleted = Array.isArray(json.deletedIds) ? json.deletedIds : [];
+            
+            if (rawIncoming !== null) {
+              this.applyAuthoritativeSync(rawIncoming, cloudDeleted);
               syncSuccess = true;
               this.lastSyncTime = Date.now();
-              // Sincronizar de vuelta cualquier acta local que falte en la nube
-              this.pushMissingLocalActas(gasUrl, incoming);
+              await this.pushPendingLocalActas(gasUrl);
             }
           }
         } catch(e) {}
       }
 
-      // 2. Fallbacks de redundancia: Servidor Local y GitHub Raw
+      // 2. Fallbacks de redundancia: Servidor Local
       if (!syncSuccess) {
-        const fallbacks = [
-          '/api/actas',
-          GITHUB_RAW_BACKUP + '?t=' + Date.now(),
-          'data/actas_db.json'
-        ];
-        for (const ep of fallbacks) {
-          try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 4000);
-            const res = await fetch(ep, { signal: controller.signal });
-            clearTimeout(timeoutId);
-            if (res.ok) {
-              const json = await res.json();
-              const incoming = Array.isArray(json) ? json : (json.actas || []);
-              if (Array.isArray(incoming) && incoming.length > 0) {
-                this.mergeActas(incoming);
-                syncSuccess = true;
-                break;
-              }
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 4000);
+          const res = await fetch('/api/actas', { signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (res.ok) {
+            const json = await res.json();
+            const rawIncoming = Array.isArray(json.actas) ? json.actas : (Array.isArray(json) ? json : null);
+            const serverDeleted = Array.isArray(json.deletedIds) ? json.deletedIds : [];
+            if (rawIncoming !== null) {
+              this.applyAuthoritativeSync(rawIncoming, serverDeleted);
+              syncSuccess = true;
             }
-          } catch(e) {}
-        }
+          }
+        } catch(e) {}
       }
 
       this.updateBadge(syncSuccess ? 'online' : 'error');
@@ -3873,6 +3956,7 @@ www.autonoma.pe`;
         createdAt: acta.createdAt || now,
         updatedAt: now,
         creadoPor: acta.creadoPor || defaultUser,
+        _isPendingSync: true, // Se marca como pendiente local hasta que la nube lo confirme
         ...acta
       };
 
@@ -3899,34 +3983,40 @@ www.autonoma.pe`;
       this.updateBadge('syncing');
 
       // 1. Guardar en Android nativo si está en la App Móvil
-      if (window.AndroidBridge && typeof window.AndroidBridge.saveActa === 'function') {
-        try {
-          window.AndroidBridge.saveActa(JSON.stringify(newActa));
-        } catch(e) {}
-      }
+      this.syncToAndroidBridge();
 
       // 2. Guardar en Google Apps Script 24/7 permanente
       const gasUrl = this.getGasWebhookUrl();
       if (gasUrl) {
         try {
+          const payload = { ...newActa };
+          delete payload._isPendingSync;
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 6000);
-          await fetch(gasUrl, {
+          const timeoutId = setTimeout(() => controller.abort(), 8000);
+          const res = await fetch(gasUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-            body: JSON.stringify({ action: 'save_acta', acta: newActa }),
+            body: JSON.stringify({ action: 'save_acta', acta: payload }),
             signal: controller.signal
           });
           clearTimeout(timeoutId);
+          if (res.ok) {
+            delete newActa._isPendingSync;
+            try {
+              localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.actas));
+            } catch(e) {}
+          }
         } catch(e) {}
       }
 
       // 3. Replicar a servidor local si está activo
       try {
+        const payloadLocal = { ...newActa };
+        delete payloadLocal._isPendingSync;
         await fetch('/api/actas', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(newActa)
+          body: JSON.stringify(payloadLocal)
         });
       } catch(e) {}
 
@@ -3940,7 +4030,16 @@ www.autonoma.pe`;
         throw new Error('No autorizado para eliminar actas');
       }
       const targetActa = this.actas.find(a => a.id === id);
-      this.actas = this.actas.filter(a => a.id !== id);
+
+      // 1. Registrar en el conjunto de eliminados y persistir de inmediato
+      this.deletedIds.add(id);
+      if (targetActa && targetActa.filename) this.deletedIds.add(targetActa.filename);
+      try {
+        localStorage.setItem('ua_actas_deleted_ids_v1', JSON.stringify([...this.deletedIds]));
+      } catch(e) {}
+
+      // 2. Eliminar del array local y actualizar UI de inmediato (0 ms lag)
+      this.actas = this.actas.filter(a => a.id !== id && (!targetActa || a.filename !== targetActa.filename));
       try {
         localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(this.actas));
       } catch(e) {}
@@ -3948,12 +4047,25 @@ www.autonoma.pe`;
       this.notifyListeners();
       this.updateBadge('syncing');
 
+      // 3. Notificar a Android nativo si estamos en APK
+      if (window.AndroidBridge) {
+        try {
+          if (typeof window.AndroidBridge.deleteActa === 'function') {
+            window.AndroidBridge.deleteActa(id);
+          }
+          if (typeof window.AndroidBridge.saveAllActas === 'function') {
+            window.AndroidBridge.saveAllActas(JSON.stringify(this.actas));
+          }
+        } catch(e) {}
+      }
+
+      // 4. Enviar eliminación a Google Apps Script
       const gasUrl = this.getGasWebhookUrl();
       if (gasUrl) {
         try {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 8000);
-          await fetch(gasUrl, {
+          const gasRes = await fetch(gasUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({
@@ -3967,9 +4079,20 @@ www.autonoma.pe`;
             signal: controller.signal
           });
           clearTimeout(timeoutId);
+          if (gasRes.ok) {
+            try {
+              const gasJson = await gasRes.json();
+              const authoritative = Array.isArray(gasJson.actas) ? gasJson.actas : null;
+              const cloudDeleted = Array.isArray(gasJson.deletedIds) ? gasJson.deletedIds : [];
+              if (authoritative !== null) {
+                this.applyAuthoritativeSync(authoritative, cloudDeleted);
+              }
+            } catch(e) {}
+          }
         } catch(e) {}
       }
 
+      // 5. Replicar eliminación al servidor local
       try {
         await fetch('/api/actas', {
           method: 'DELETE',
@@ -3982,6 +4105,7 @@ www.autonoma.pe`;
       } catch(e) {}
 
       this.updateBadge('online');
+      return true;
     },
 
     startModalRealtimePolling() {

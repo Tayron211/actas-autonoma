@@ -476,6 +476,48 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public void saveAllActas(String jsonArray) {
+            try {
+                File f = new File(getFilesDir(), "actas_db.json");
+                FileOutputStream fos = new FileOutputStream(f);
+                fos.write(jsonArray.getBytes("UTF-8"));
+                fos.flush();
+                fos.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        @JavascriptInterface
+        public void deleteActa(String id) {
+            try {
+                File f = new File(getFilesDir(), "actas_db.json");
+                if (!f.exists()) return;
+                FileInputStream fis = new FileInputStream(f);
+                byte[] buf = new byte[(int) f.length()];
+                fis.read(buf);
+                fis.close();
+                String existing = new String(buf, "UTF-8");
+                org.json.JSONArray arr = new org.json.JSONArray(existing);
+                org.json.JSONArray newArr = new org.json.JSONArray();
+                for (int i = 0; i < arr.length(); i++) {
+                    org.json.JSONObject item = arr.getJSONObject(i);
+                    String itemId = item.optString("id", "");
+                    String itemFilename = item.optString("filename", "");
+                    if (!itemId.equals(id) && !itemFilename.equals(id)) {
+                        newArr.put(item);
+                    }
+                }
+                FileOutputStream fos = new FileOutputStream(f);
+                fos.write(newArr.toString().getBytes("UTF-8"));
+                fos.flush();
+                fos.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        @JavascriptInterface
         public void downloadApkDirect() {
             new Thread(new Runnable() {
                 @Override

@@ -30,6 +30,7 @@ const MIME_TYPES = {
 
 const DATA_DIR = path.join(__dirname, 'data');
 const ACTAS_DB_FILE = path.join(DATA_DIR, 'actas_db.json');
+const DELETED_IDS_FILE = path.join(DATA_DIR, 'deleted_ids.json');
 
 if (!fs.existsSync(DATA_DIR)) {
   fs.mkdirSync(DATA_DIR, { recursive: true });
@@ -52,6 +53,23 @@ function saveStoredActas(list) {
     syncToCloudDb(list);
   } catch (e) {
     console.error('Error al guardar base de datos actas_db.json:', e);
+  }
+}
+
+function getDeletedIds() {
+  try {
+    if (fs.existsSync(DELETED_IDS_FILE)) {
+      return JSON.parse(fs.readFileSync(DELETED_IDS_FILE, 'utf8'));
+    }
+  } catch (e) {}
+  return [];
+}
+
+function saveDeletedIds(ids) {
+  try {
+    fs.writeFileSync(DELETED_IDS_FILE, JSON.stringify(ids, null, 2), 'utf8');
+  } catch (e) {
+    console.error('Error al guardar deleted_ids.json:', e);
   }
 }
 
@@ -194,8 +212,9 @@ function startServer(port) {
     // ============================================================
     if (req.method === 'GET' && reqUrl === '/api/actas') {
       const actas = getStoredActas();
+      const deletedIds = getDeletedIds();
       res.writeHead(200, { 'Content-Type': 'application/json; charset=UTF-8' });
-      res.end(JSON.stringify({ status: 'success', count: actas.length, actas }));
+      res.end(JSON.stringify({ status: 'success', count: actas.length, actas, deletedIds }));
       return;
     }
 
@@ -206,8 +225,9 @@ function startServer(port) {
         try {
           const data = JSON.parse(body);
           const updated = upsertActa(data);
+          const deletedIds = getDeletedIds();
           res.writeHead(200, { 'Content-Type': 'application/json; charset=UTF-8' });
-          res.end(JSON.stringify({ status: 'success', count: updated.length }));
+          res.end(JSON.stringify({ status: 'success', count: updated.length, actas: updated, deletedIds }));
         } catch (e) {
           res.writeHead(400, { 'Content-Type': 'application/json; charset=UTF-8' });
           res.end(JSON.stringify({ status: 'error', message: e.message }));
@@ -223,18 +243,25 @@ function startServer(port) {
         try {
           const data = JSON.parse(body || '{}');
           const id = data.id;
+          const filename = data.filename;
           let list = getStoredActas();
-          const target = list.find(a => a.id === id);
+          const target = list.find(a => (id && a.id === id) || (filename && a.filename === filename));
           if (target && target.localPath) {
             try {
               const fullLocal = path.join(__dirname, target.localPath.replace(/^\//, ''));
               if (fs.existsSync(fullLocal)) fs.unlinkSync(fullLocal);
             } catch (errLocal) {}
           }
-          list = list.filter(a => a.id !== id);
+          list = list.filter(a => (id && a.id === id ? false : (filename && a.filename === filename ? false : true)));
           saveStoredActas(list);
+
+          const dIds = getDeletedIds();
+          if (id && !dIds.includes(id)) dIds.push(id);
+          if (filename && !dIds.includes(filename)) dIds.push(filename);
+          saveDeletedIds(dIds);
+
           res.writeHead(200, { 'Content-Type': 'application/json; charset=UTF-8' });
-          res.end(JSON.stringify({ status: 'success', count: list.length }));
+          res.end(JSON.stringify({ status: 'success', count: list.length, actas: list, deletedIds: dIds }));
         } catch (e) {
           res.writeHead(400, { 'Content-Type': 'application/json; charset=UTF-8' });
           res.end(JSON.stringify({ status: 'error', message: e.message }));
