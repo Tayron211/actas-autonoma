@@ -1,14 +1,14 @@
-const CACHE_NAME = 'actas-dti-v37';
+const CACHE_NAME = 'actas-dti-v38';
 const PRECACHE_ASSETS = [
   './',
   './index.html',
   './manifest.webmanifest',
-  './css/app.css?v=37',
+  './css/app.css?v=38',
   './brand/css/variables.css?v=15',
   './brand/css/typography.css?v=15',
   './brand/css/buttons.css?v=15',
   './brand/css/forms.css?v=15',
-  './js/app.js?v=37',
+  './js/app.js?v=38',
   './js/html2pdf.bundle.min.js',
   './js/signature.js',
   './brand/pwa-icon-192.png',

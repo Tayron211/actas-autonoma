@@ -752,9 +752,11 @@ public class MainActivity extends Activity {
         final long MIN_SPLASH_TIME = 1500;
 
         webView.setWebViewClient(new WebViewClient() {
+            private boolean isOffline = false;
+
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, String url) {
-                if (url.startsWith("file:///android_asset/")) {
+                if (url.startsWith("file:///android_asset/") || url.contains("tayron211.github.io")) {
                     return false;
                 }
                 try {
@@ -763,6 +765,14 @@ public class MainActivity extends Activity {
                     return true;
                 } catch (Exception e) {
                     return false;
+                }
+            }
+
+            @Override
+            public void onReceivedError(WebView view, int errorCode, String description, String failingUrl) {
+                if (failingUrl != null && failingUrl.startsWith("http") && !isOffline) {
+                    isOffline = true;
+                    view.loadUrl("file:///android_asset/index.html");
                 }
             }
 
@@ -802,8 +812,8 @@ public class MainActivity extends Activity {
 
         setContentView(rootLayout);
 
-        // CARGA LOCAL 100% STANDALONE (SIN DEPENDER DE SERVIDOR WEB NI TÚNELES)
-        webView.loadUrl("file:///android_asset/index.html");
+        // Carga online en tiempo real (si no hay red, entra automáticamente a file:///android_asset/index.html)
+        webView.loadUrl("https://tayron211.github.io/actas-autonoma/");
     }
 
     @Override

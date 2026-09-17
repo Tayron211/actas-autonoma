@@ -665,6 +665,18 @@ document.addEventListener('DOMContentLoaded', () => {
       await loadHistoryData();
       if (btn) setTimeout(() => btn.classList.remove('btn-refreshing'), 600);
     });
+    document.getElementById('btnClearAllHistory')?.addEventListener('click', async () => {
+      if (typeof AuthManager !== 'undefined' && !AuthManager.isAdmin()) {
+        alert('Acceso denegado: Solo el Administrador DTI tiene autorización para vaciar el historial.');
+        return;
+      }
+      const confirmClear = confirm('⚠️ ¿Estás seguro de que deseas VACIAR Y ELIMINAR TODO EL HISTORIAL DE ACTAS?\n\nEsta acción eliminará permanentemente todas las actas de la nube, de Google Drive y de todos los dispositivos y celulares en tiempo real.');
+      if (confirmClear) {
+        await CloudDatabaseManager.clearAllActas();
+        showToast('🗑️ Historial vaciado por completo en todos los dispositivos', 'success', 5000);
+        renderHistoryList();
+      }
+    });
     document.getElementById('historySearchInput')?.addEventListener('input', renderHistoryList);
     document.querySelectorAll('.history-filter-btn').forEach(btn => {
       btn.addEventListener('click', () => {
@@ -3613,6 +3625,7 @@ www.autonoma.pe`;
   // ============================================================
   const GITHUB_RAW_BACKUP = 'https://raw.githubusercontent.com/Tayron211/actas-autonoma/main/data/actas_db.json';
   const LOCAL_STORAGE_KEY = 'ua_actas_cloud_cache_v1';
+  const FAST_REALTIME_CLOUD_URL = 'https://api.restful-api.dev/objects/ff808181a067127101a08f30555871e8';
 
   var CloudDatabaseManager = {
     actas: [],
@@ -3620,6 +3633,7 @@ www.autonoma.pe`;
     listeners: [],
     isSyncing: false,
     lastSyncTime: null,
+    lastGasSyncTime: 0,
     pollTimer: null,
     activeApiUrl: OFFICIAL_DEFAULT_GAS_WEBHOOK,
 
@@ -3681,13 +3695,13 @@ www.autonoma.pe`;
         }
       } catch(e) {}
 
-      // 6. Primera sincronización inmediata 24/7 con Google Apps Script
+      // 6. Primera sincronización inmediata con la nube
       this.syncFromCloud();
 
-      // 7. Sincronización inteligente periódica en segundo plano (cada 10s)
+      // 7. Sincronización periódica ultrarrápida en segundo plano (cada 2.5s para tiempo real estricto)
       setInterval(() => {
         this.syncFromCloud();
-      }, 10000);
+      }, 2500);
 
       // 8. Sincronización inmediata al reactivar la app o pestaña
       document.addEventListener('visibilitychange', () => {
@@ -3849,7 +3863,7 @@ www.autonoma.pe`;
       if (status === 'syncing') {
         badge.style.background = '#3B82F6';
         badge.style.boxShadow = '0 0 10px #3B82F6';
-        badge.title = 'Sincronizando en tiempo real con Google Cloud 24/7...';
+        badge.title = 'Sincronizando en tiempo real con la nube 24/7...';
       } else if (status === 'error') {
         badge.style.background = '#F59E0B';
         badge.style.boxShadow = '0 0 10px #F59E0B';
@@ -3857,7 +3871,7 @@ www.autonoma.pe`;
       } else {
         badge.style.background = '#10B981';
         badge.style.boxShadow = '0 0 10px #10B981';
-        badge.title = 'Nube Google Drive 24/7 (Sincronizado al 100%)';
+        badge.title = 'Nube Actas DTI 24/7 (Sincronizado en tiempo real)';
       }
     },
 
@@ -3886,19 +3900,64 @@ www.autonoma.pe`;
       } catch(e) {}
     },
 
+    async broadcastToFastCloud() {
+      try {
+        const cleanList = this.actas.map(a => {
+          const c = { ...a };
+          delete c._isPendingSync;
+          return c;
+        });
+        await fetch(FAST_REALTIME_CLOUD_URL, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: 'AUTONOMA_ACTAS_DATABASE',
+            data: {
+              version: 2,
+              lastSync: new Date().toISOString(),
+              actas: cleanList,
+              deletedIds: [...this.deletedIds]
+            }
+          })
+        });
+      } catch(e) {}
+    },
+
     async syncFromCloud() {
       if (this.isSyncing) return;
       this.isSyncing = true;
       this.updateBadge('syncing');
 
       let syncSuccess = false;
+
+      // 1. Canal Ultrarrápido en Tiempo Real (~500ms)
+      try {
+        const fastController = new AbortController();
+        const fastTimer = setTimeout(() => fastController.abort(), 3000);
+        const fastRes = await fetch(FAST_REALTIME_CLOUD_URL, { signal: fastController.signal });
+        clearTimeout(fastTimer);
+        if (fastRes.ok) {
+          const fastJson = await fastRes.json();
+          if (fastJson && fastJson.data) {
+            const rawIncoming = Array.isArray(fastJson.data.actas) ? fastJson.data.actas : [];
+            const cloudDeleted = Array.isArray(fastJson.data.deletedIds) ? fastJson.data.deletedIds : [];
+            this.applyAuthoritativeSync(rawIncoming, cloudDeleted);
+            syncSuccess = true;
+            this.lastSyncTime = Date.now();
+          }
+        }
+      } catch(e) {}
+
+      // 2. Canal Primario Permanente: Google Apps Script 24/7 (Drive, Carpetas, Respaldos)
+      // Se consulta cada 12 segundos o si el canal rápido falló
+      const now = Date.now();
+      const shouldCheckGas = !this.lastGasSyncTime || (now - this.lastGasSyncTime > 12000) || !syncSuccess;
       const gasUrl = this.getGasWebhookUrl();
 
-      // 1. Sincronización Primaria: Google Apps Script 24/7
-      if (gasUrl) {
+      if (gasUrl && shouldCheckGas) {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 8000);
+          const timeoutId = setTimeout(() => controller.abort(), 7000);
           const res = await fetch(gasUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
@@ -3914,6 +3973,7 @@ www.autonoma.pe`;
             if (rawIncoming !== null) {
               this.applyAuthoritativeSync(rawIncoming, cloudDeleted);
               syncSuccess = true;
+              this.lastGasSyncTime = Date.now();
               this.lastSyncTime = Date.now();
               await this.pushPendingLocalActas(gasUrl);
             }
@@ -3921,11 +3981,11 @@ www.autonoma.pe`;
         } catch(e) {}
       }
 
-      // 2. Fallbacks de redundancia: Servidor Local
+      // 3. Fallbacks de redundancia: Servidor Local
       if (!syncSuccess) {
         try {
           const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 4000);
+          const timeoutId = setTimeout(() => controller.abort(), 3000);
           const res = await fetch('/api/actas', { signal: controller.signal });
           clearTimeout(timeoutId);
           if (res.ok) {
@@ -3946,7 +4006,7 @@ www.autonoma.pe`;
     },
 
     async saveActa(acta) {
-      const id = acta.id || `ACTA-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      const id = acta.id || ('ACTA-' + Date.now() + '-' + Math.floor(Math.random() * 1000));
       const now = new Date().toISOString();
       const currentUser = (typeof AuthManager !== 'undefined' && AuthManager.getCurrentUser) ? AuthManager.getCurrentUser() : null;
       const defaultUser = currentUser ? currentUser.username : 'Sistema';
@@ -3985,7 +4045,10 @@ www.autonoma.pe`;
       // 1. Guardar en Android nativo si está en la App Móvil
       this.syncToAndroidBridge();
 
-      // 2. Guardar en Google Apps Script 24/7 permanente
+      // 2. Transmisión instantánea al canal rápido en tiempo real (500ms)
+      this.broadcastToFastCloud();
+
+      // 3. Guardar en Google Apps Script 24/7 permanente
       const gasUrl = this.getGasWebhookUrl();
       if (gasUrl) {
         try {
@@ -4009,7 +4072,7 @@ www.autonoma.pe`;
         } catch(e) {}
       }
 
-      // 3. Replicar a servidor local si está activo
+      // 4. Replicar a servidor local si está activo
       try {
         const payloadLocal = { ...newActa };
         delete payloadLocal._isPendingSync;
@@ -4059,7 +4122,10 @@ www.autonoma.pe`;
         } catch(e) {}
       }
 
-      // 4. Enviar eliminación a Google Apps Script
+      // 4. Transmisión instantánea al canal rápido en tiempo real (500ms)
+      this.broadcastToFastCloud();
+
+      // 5. Enviar eliminación a Google Apps Script para papelera de Drive
       const gasUrl = this.getGasWebhookUrl();
       if (gasUrl) {
         try {
@@ -4092,7 +4158,7 @@ www.autonoma.pe`;
         } catch(e) {}
       }
 
-      // 5. Replicar eliminación al servidor local
+      // 6. Replicar eliminación al servidor local
       try {
         await fetch('/api/actas', {
           method: 'DELETE',
@@ -4108,12 +4174,47 @@ www.autonoma.pe`;
       return true;
     },
 
+    async clearAllActas() {
+      if (typeof AuthManager !== 'undefined' && !AuthManager.isAdmin()) {
+        alert('Acceso denegado: Solo el Administrador DTI puede vaciar el historial.');
+        return false;
+      }
+      this.actas.forEach(a => {
+        if (a.id) this.deletedIds.add(a.id);
+        if (a.filename) this.deletedIds.add(a.filename);
+      });
+      this.actas = [];
+      try {
+        localStorage.setItem('ua_actas_deleted_ids_v1', JSON.stringify([...this.deletedIds]));
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify([]));
+      } catch(e) {}
+      cachedHistoryActas = [];
+      this.notifyListeners();
+      this.syncToAndroidBridge();
+      this.broadcastToFastCloud();
+
+      const gasUrl = this.getGasWebhookUrl();
+      if (gasUrl) {
+        try {
+          fetch(gasUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+            body: JSON.stringify({
+              action: 'clear_all_actas',
+              deletedIds: [...this.deletedIds]
+            })
+          }).catch(() => {});
+        } catch(e) {}
+      }
+      return true;
+    },
+
     startModalRealtimePolling() {
       if (this.pollTimer) clearInterval(this.pollTimer);
       this.syncFromCloud(); // Sincronización instantánea al abrir modal
       this.pollTimer = setInterval(() => {
         this.syncFromCloud();
-      }, 3500); // Polling cada 3.5s mientras el modal esté abierto
+      }, 1500); // Polling ultrarrápido cada 1.5s mientras el modal esté abierto
     },
 
     stopModalRealtimePolling() {
@@ -4173,6 +4274,11 @@ www.autonoma.pe`;
     const isAdmin = (typeof AuthManager !== 'undefined' && AuthManager.isAdmin) ? AuthManager.isAdmin() : false;
 
     if (!listEl) return;
+
+    const btnClearAll = document.getElementById('btnClearAllHistory');
+    if (btnClearAll) {
+      btnClearAll.style.display = (isAdmin && cachedHistoryActas.length > 0) ? 'inline-flex' : 'none';
+    }
 
     let filtered = cachedHistoryActas;
 

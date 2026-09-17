@@ -32,7 +32,7 @@
   <link rel="stylesheet" href="brand/css/typography.css?v=5">
   <link rel="stylesheet" href="brand/css/buttons.css?v=5">
   <link rel="stylesheet" href="brand/css/forms.css?v=5">
-  <link rel="stylesheet" href="css/app.css?v=37">
+  <link rel="stylesheet" href="css/app.css?v=38">
 
   <script>
     // Diálogo Actas Autónoma en lugar de <domain> dice
@@ -900,11 +900,15 @@
 
       <div class="modal-body" style="padding: 1rem 1.25rem; overflow-y: auto; flex: 1;">
         <!-- Barra de Búsqueda y Filtros -->
-        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.85rem; flex-wrap: wrap;">
+        <div style="display: flex; gap: 0.5rem; margin-bottom: 0.85rem; flex-wrap: wrap; align-items: center;">
           <input type="text" id="historySearchInput" class="form-control" placeholder="🔍 Buscar por colaborador, DNI o código de equipo..." style="flex: 1; min-width: 200px;">
           <button type="button" id="btnRefreshHistory" class="btn btn-secondary btn-sm" title="Refrescar lista en tiempo real">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
             <span>Actualizar</span>
+          </button>
+          <button type="button" id="btnClearAllHistory" class="btn btn-outline-secondary btn-sm" style="display: none; color: #DC2626; border-color: #FECACA; background: #FEF2F2; font-weight: 600; gap: 4px; align-items: center;" title="Eliminar todas las actas del historial en la nube (Solo Administrador)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+            <span>Vaciar Todo</span>
           </button>
         </div>
 
@@ -1097,7 +1101,7 @@
   <!-- Scripts -->
   <script src="js/html2pdf.bundle.min.js"></script>
   <script src="js/signature.js"></script>
-  <script src="js/app.js?v=37"></script>
+  <script src="js/app.js?v=38"></script>
 
 </body>
 

@@ -357,6 +357,28 @@ function doPost(e) {
     }
 
     // ------------------------------------------------------------
+    // ACCIÓN 3B: VACIAR HISTORIAL COMPLETO (SOLO ADMINISTRADOR)
+    // ------------------------------------------------------------
+    if (data.action === "clear_all_actas") {
+      var dbData = loadDbData(rootFolder);
+      (data.deletedIds || []).forEach(function(did) {
+        if (did) {
+          if (!dbData.deletedIds) dbData.deletedIds = [];
+          if (dbData.deletedIds.indexOf(did) === -1) dbData.deletedIds.push(did);
+        }
+      });
+      dbData.actas = [];
+      saveDbData(rootFolder, dbData);
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "success",
+        message: "Historial vaciado correctamente",
+        count: 0,
+        actas: [],
+        deletedIds: dbData.deletedIds
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ------------------------------------------------------------
     // ACCIÓN 4: ENVÍO DIRECTO POR CORREO ELECTRÓNICO CON PDF ADJUNTO
     // ------------------------------------------------------------
     if (data.action === "send_email" || data.sendEmail) {
@@ -514,15 +536,16 @@ function doPost(e) {
 function doGet(e) {
   try {
     var rootFolder = DriveApp.getFolderById(ROOT_FOLDER_ID);
-    var actasList = loadActasFromDb(rootFolder);
+    var dbData = loadDbData(rootFolder);
     var callback = e && e.parameter && e.parameter.callback;
 
     var responseObj = {
       status: "success",
       online: true,
       message: "Sincronización 24/7 en tiempo real Actas DTI activa",
-      count: actasList.length,
-      actas: actasList,
+      count: dbData.actas.length,
+      actas: dbData.actas,
+      deletedIds: dbData.deletedIds || [],
       rootFolderId: ROOT_FOLDER_ID
     };
 
